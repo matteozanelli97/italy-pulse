@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Italy Pulse — Mood Nazionale in Tempo Reale",
+  title: "Italy Pulse — Piattaforma Analitica OSINT",
   description:
-    "Piattaforma che calcola e visualizza il sentiment nazionale e regionale italiano in tempo reale. Come se Il Post e Bloomberg Terminal avessero fatto un figlio italiano.",
+    "Dashboard OSINT in tempo reale per l'Italia. Dati sismici, meteo, mercati, intelligence, qualità dell'aria su mappa interattiva.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="it" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -22,11 +22,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased overflow-hidden h-screen w-screen">
         {children}
       </body>
     </html>

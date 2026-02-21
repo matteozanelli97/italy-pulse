@@ -1,109 +1,104 @@
-// Italy Pulse — Tipi globali
+// ============================================================
+// ITALY PULSE — OSINT Dashboard Types
+// ============================================================
 
-export type CategoriaNotizia =
-  | "politica"
-  | "economia"
-  | "cronaca"
-  | "intrattenimento"
-  | "scioperi";
-
-export interface Regione {
-  nome: string;
-  slug: string;
-  capoluogo: string;
-  sentiment: number; // 0-100
-  emoji: string;
-  frase: string;
-  fattori: FattoriSentiment;
+// --- Map & Geolocation ---
+export interface GeoCoord {
+  lat: number;
+  lng: number;
 }
 
-export interface FattoriSentiment {
-  umoreEconomico: number;    // 0-100
-  climaPolitico: number;     // 0-100
-  meteo: number;             // 0-100
-  sentimentSocial: number;   // 0-100
-  notizie: number;           // 0-100
-  indiceCaos: number;        // 0-100
-}
-
-export interface PesiSentiment {
-  umoreEconomico: number;
-  climaPolitico: number;
-  meteo: number;
-  sentimentSocial: number;
-  notizie: number;
-  indiceCaos: number;
-}
-
-export interface MoodNazionaleData {
-  valore: number;            // 0-100
-  emoji: string;
-  colore: string;            // hex color
-  frase: string;
-  aggiornamento: string;     // ISO timestamp
-  fattori: FattoriSentiment;
-}
-
-export interface Notizia {
+export interface MapMarker {
   id: string;
-  titolo: string;
-  sommario: string;
-  fonte: string;
-  categoria: CategoriaNotizia;
-  timestamp: string;
-  sentiment: "positivo" | "negativo" | "neutro";
-  regione?: string;          // slug regione, opzionale
-}
-
-export interface DatiMercato {
-  ftseMib: number;
-  ftseMibVariazione: number;
-  spreadBtp: number;
-  spreadVariazione: number;
-  prezzoBenzina: number;
-  prezzoOro: number;
-  oroVariazione: number;
-  aggiornamento: string;
-}
-
-export interface DatiMeteo {
-  citta: string;
-  regione: string;
-  temperatura: number;
-  condizione: CondizioneMeteo;
-  emoji: string;
-}
-
-export type CondizioneMeteo =
-  | "sereno"
-  | "nuvoloso"
-  | "pioggia"
-  | "temporale"
-  | "neve"
-  | "nebbia"
-  | "variabile";
-
-export interface TickerItem {
+  position: GeoCoord;
+  type: 'earthquake' | 'weather' | 'news' | 'airquality' | 'flight';
   label: string;
-  valore: string;
-  trend?: "up" | "down" | "stable";
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  data?: unknown;
 }
 
-export interface SentimentResponse {
-  moodNazionale: MoodNazionaleData;
-  regioni: Regione[];
+// --- Seismic (INGV) ---
+export interface SeismicEvent {
+  id: string;
+  time: string;
+  latitude: number;
+  longitude: number;
+  depth: number;
+  magnitude: number;
+  magnitudeType: string;
+  description: string;
+  region: string;
 }
 
-export interface MeteoResponse {
-  citta: DatiMeteo[];
-  aggiornamento: string;
+// --- Weather (Open-Meteo) ---
+export interface WeatherData {
+  city: string;
+  latitude: number;
+  longitude: number;
+  temperature: number;
+  apparentTemperature: number;
+  humidity: number;
+  windSpeed: number;
+  windDirection: number;
+  weatherCode: number;
+  weatherDescription: string;
+  isDay: boolean;
+  precipitation: number;
+  alertLevel: 'none' | 'advisory' | 'watch' | 'warning';
 }
 
-export interface MercatiResponse {
-  dati: DatiMercato;
+// --- Markets ---
+export interface MarketTick {
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  changePercent24h: number;
+  lastUpdate: string;
+  currency: string;
+  sparkline?: number[];
 }
 
-export interface NotizieResponse {
-  notizie: Notizia[];
-  aggiornamento: string;
+// --- News ---
+export interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  category: string;
+  imageUrl?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+// --- Air Quality ---
+export interface AirQualityStation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  aqi: number;
+  level: 'good' | 'moderate' | 'unhealthy_sensitive' | 'unhealthy' | 'very_unhealthy' | 'hazardous';
+  dominantPollutant: string;
+  lastUpdate: string;
+}
+
+// --- System Status ---
+export interface SystemStatus {
+  uptime: number;
+  activeSources: number;
+  totalSources: number;
+  lastSync: string;
+  dataPoints: number;
+}
+
+// --- Dashboard State ---
+export interface DashboardState {
+  selectedEvent: MapMarker | null;
+  activePanel: string | null;
+  mapCenter: GeoCoord;
+  mapZoom: number;
+  isLive: boolean;
 }

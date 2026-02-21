@@ -1,8 +1,0 @@
-{
-  "umoreEconomico": 0.25,
-  "climaPolitico": 0.20,
-  "meteo": 0.10,
-  "sentimentSocial": 0.20,
-  "notizie": 0.15,
-  "indiceCaos": 0.10
-}

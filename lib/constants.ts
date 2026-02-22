@@ -8,12 +8,22 @@ import type { GeoCoord } from '@/types';
 export const ITALY_CENTER: GeoCoord = { lat: 42.0, lng: 12.5 };
 export const ITALY_ZOOM = 6;
 
+// Italy geographical bounds for map restriction
+export const ITALY_BOUNDS = {
+  north: 47.1,
+  south: 35.5,
+  west: 6.6,
+  east: 18.6,
+} as const;
+
 // Polling intervals (ms)
 export const POLL_SEISMIC = 30_000;      // 30s — earthquakes
 export const POLL_WEATHER = 300_000;     // 5min — weather
 export const POLL_MARKETS = 60_000;      // 1min — markets
 export const POLL_NEWS = 120_000;        // 2min — news
 export const POLL_AIR_QUALITY = 600_000; // 10min — air quality
+export const POLL_TRANSPORT = 180_000;   // 3min — transport
+export const POLL_ENERGY = 300_000;      // 5min — energy
 
 // Italian cities for weather monitoring
 export const MONITORED_CITIES = [
@@ -46,6 +56,21 @@ export const SEVERITY_COLORS = {
   high: '#ff4444',
   critical: '#ff0044',
 } as const;
+
+// Sidebar modules definition
+export const SIDEBAR_MODULES = [
+  { id: 'dashboard', label: 'Dashboard', description: 'Panoramica generale' },
+  { id: 'radar', label: 'Radar Sismico', description: 'Attività sismica in tempo reale' },
+  { id: 'satellite', label: 'Satelliti', description: 'Monitoraggio satellitare' },
+  { id: 'financial', label: 'Finanza', description: 'Mercati e dati finanziari' },
+  { id: 'naval', label: 'Navale', description: 'Tracking marittimo AIS' },
+  { id: 'cyber', label: 'Cyber Intel', description: 'Minacce informatiche' },
+  { id: 'intel', label: 'Intelligence', description: 'Analisi intelligence' },
+  { id: 'weather', label: 'Meteo', description: 'Condizioni meteorologiche' },
+  { id: 'airquality', label: 'Qualità Aria', description: 'Indice qualità aria' },
+  { id: 'transport', label: 'Trasporti', description: 'Stato trasporti nazionali' },
+  { id: 'energy', label: 'Energia', description: 'Mercato energetico' },
+] as const;
 
 // WMO Weather codes to descriptions
 export const WMO_CODES: Record<number, string> = {

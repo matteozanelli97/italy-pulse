@@ -7,12 +7,15 @@ import type { NewsItem } from '@/types';
 interface IntelStreamProps {
   items: NewsItem[];
   loading: boolean;
+  aiSummary?: string;
+  trendingTopics?: { topic: string; count: number; sentiment: 'positive' | 'negative' | 'neutral' }[];
 }
 
 const CATEGORIES = [
-  { id: 'all', label: 'Tutte', color: '#388bff' },
+  { id: 'all', label: 'Tutte', color: '#00d4ff' },
+  { id: 'breaking', label: 'Urgenti', color: '#ff3b5c' },
   { id: 'Politica', label: 'Politica', color: '#388bff' },
-  { id: 'Tecnologia', label: 'Tecnologia', color: '#00d4ff' },
+  { id: 'Tecnologia', label: 'Tech', color: '#00d4ff' },
   { id: 'Economia', label: 'Economia', color: '#00e87b' },
   { id: 'Sicurezza', label: 'Sicurezza', color: '#ff3b5c' },
   { id: 'Mondo', label: 'Mondo', color: '#a855f7' },
@@ -28,17 +31,17 @@ const BADGE_MAP: Record<string, string> = {
 
 function categorize(item: NewsItem): string {
   const t = (item.title + ' ' + item.description + ' ' + item.category).toLowerCase();
-  if (/politic|governo|parlamento|ministro|elezioni|decreto/i.test(t)) return 'Politica';
-  if (/tecnolog|digitale|ai|cyber|software|startup|app/i.test(t)) return 'Tecnologia';
-  if (/econom|finanz|borsa|mercati|pil|inflaz|banca|spread|euro/i.test(t)) return 'Economia';
-  if (/sicurezz|terroris|difesa|polizia|carabinieri|arma|attacca|guerra/i.test(t)) return 'Sicurezza';
-  if (/sport|calcio|serie a|champions|olimp|tennis|formula/i.test(t)) return 'Sport';
-  if (/mond|internazional|usa|cina|russia|europa|trump|nato/i.test(t)) return 'Mondo';
-  if (/cronaca|incidente|morto|omicidio|arresto|indagine/i.test(t)) return 'Cronaca';
+  if (/politic|governo|parlamento|ministro|elezioni|decreto|senato|camera/i.test(t)) return 'Politica';
+  if (/tecnolog|digitale|ai\b|cyber|software|startup|app\b|robot|algoritm/i.test(t)) return 'Tecnologia';
+  if (/econom|finanz|borsa|mercati|pil|inflaz|banca|spread|euro|lavoro|occupaz/i.test(t)) return 'Economia';
+  if (/sicurezz|terroris|difesa|polizia|carabinieri|arma|attacca|guerra|militar/i.test(t)) return 'Sicurezza';
+  if (/sport|calcio|serie a|champions|olimp|tennis|formula|gol|partita/i.test(t)) return 'Sport';
+  if (/mond|internazional|usa|cina|russia|europa|trump|nato|onu|medio.?orient/i.test(t)) return 'Mondo';
+  if (/cronaca|incidente|morto|omicidio|arresto|indagine|rapina|droga/i.test(t)) return 'Cronaca';
   return item.category || 'Generale';
 }
 
-export default function IntelStream({ items, loading }: IntelStreamProps) {
+export default function IntelStream({ items, loading, aiSummary, trendingTopics }: IntelStreamProps) {
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -49,7 +52,11 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
 
   const filtered = useMemo(() => {
     let result = categorizedItems;
-    if (activeTab !== 'all') result = result.filter((i) => i._cat === activeTab);
+    if (activeTab === 'breaking') {
+      result = result.filter((i) => i.isBreaking);
+    } else if (activeTab !== 'all') {
+      result = result.filter((i) => i._cat === activeTab);
+    }
     if (search) {
       const s = search.toLowerCase();
       result = result.filter((i) => i.title.toLowerCase().includes(s) || i.description.toLowerCase().includes(s));
@@ -57,38 +64,70 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
     return result;
   }, [categorizedItems, activeTab, search]);
 
+  const breakingCount = categorizedItems.filter((i) => i.isBreaking).length;
+
   return (
     <motion.aside
       initial={{ x: 380, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.45, delay: 0.2, ease: 'easeOut' }}
-      className="hidden w-[360px] flex-shrink-0 flex-col overflow-hidden border-l lg:flex"
-      style={{ background: 'var(--bg-deep)', borderColor: 'var(--border-dim)' }}
+      className="hidden w-[340px] flex-shrink-0 flex-col overflow-hidden border-l lg:flex"
+      style={{ background: '#0a0a0a', borderColor: 'var(--border-dim)' }}
     >
       {/* Header */}
       <div className="border-b px-4 py-2.5" style={{ borderColor: 'var(--border-dim)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(56,139,255,0.08)' }}>
-            <svg viewBox="0 0 16 16" fill="var(--accent-blue)" className="h-3.5 w-3.5">
-              <path d="M8 1a1 1 0 011 1v1.586l1.707-1.707a1 1 0 111.414 1.414L10.414 5H12a1 1 0 110 2h-1.586l1.707 1.707a1 1 0 01-1.414 1.414L9 8.414V10a1 1 0 11-2 0V8.414L5.293 10.121a1 1 0 01-1.414-1.414L5.586 7H4a1 1 0 010-2h1.586L3.879 3.293a1 1 0 011.414-1.414L7 3.586V2a1 1 0 011-1z" />
+          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(0,212,255,0.06)' }}>
+            <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+              <path d="M2 3h12M2 7h8M2 11h12M2 15h6" stroke="var(--accent-cyan)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </span>
           <h2 className="text-[12px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-primary)' }}>
             Intel Stream
           </h2>
           <div className="flex-1" />
+          {breakingCount > 0 && (
+            <span className="breaking-indicator rounded-full px-2 py-0.5 font-mono text-[9px] font-bold"
+              style={{ background: 'rgba(255,59,92,0.12)', color: '#ff3b5c', border: '1px solid rgba(255,59,92,0.2)' }}>
+              {breakingCount} URGENTI
+            </span>
+          )}
           <span className="rounded-full px-2 py-0.5 font-mono text-[9px] font-bold"
-            style={{ background: 'rgba(56,139,255,0.08)', color: 'var(--accent-blue)', border: '1px solid var(--border-dim)' }}>
+            style={{ background: 'rgba(0,212,255,0.06)', color: 'var(--accent-cyan)', border: '1px solid var(--border-dim)' }}>
             {filtered.length}
           </span>
         </div>
 
+        {/* AI Summary */}
+        {aiSummary && (
+          <div className="mb-2 rounded-md px-2.5 py-1.5 text-[10px] leading-relaxed"
+            style={{ background: 'rgba(168,85,247,0.05)', border: '1px solid rgba(168,85,247,0.12)', color: 'var(--accent-purple)' }}>
+            <span className="font-bold mr-1 opacity-70">AI</span>{aiSummary}
+          </div>
+        )}
+
+        {/* Trending topics */}
+        {trendingTopics && trendingTopics.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {trendingTopics.slice(0, 4).map((t) => (
+              <span key={t.topic} className="rounded px-1.5 py-0.5 text-[8px] font-medium"
+                style={{
+                  background: t.sentiment === 'negative' ? 'rgba(255,59,92,0.06)' : t.sentiment === 'positive' ? 'rgba(0,232,123,0.06)' : 'rgba(255,255,255,0.03)',
+                  color: t.sentiment === 'negative' ? '#ff3b5c' : t.sentiment === 'positive' ? '#00e87b' : 'var(--text-dim)',
+                  border: `1px solid ${t.sentiment === 'negative' ? 'rgba(255,59,92,0.12)' : t.sentiment === 'positive' ? 'rgba(0,232,123,0.12)' : 'var(--border-dim)'}`,
+                }}>
+                {t.topic} ({t.count})
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Search */}
         <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-dim)' }}>
-          <svg viewBox="0 0 16 16" fill="var(--text-muted)" className="h-3.5 w-3.5 flex-shrink-0">
-            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 flex-shrink-0">
+            <circle cx="7" cy="7" r="4.5" stroke="var(--text-muted)" strokeWidth="1.5" />
+            <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <input
             value={search}
@@ -101,17 +140,16 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
       </div>
 
       {/* Category tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b px-3 py-2"
-        style={{ borderColor: 'var(--border-dim)' }}>
+      <div className="flex items-center gap-1 overflow-x-auto border-b px-3 py-2" style={{ borderColor: 'var(--border-dim)' }}>
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveTab(cat.id)}
             className="flex-shrink-0 rounded-md px-2 py-1 text-[9px] font-semibold uppercase tracking-wider transition-all"
             style={{
-              background: activeTab === cat.id ? `${cat.color}15` : 'transparent',
+              background: activeTab === cat.id ? `${cat.color}12` : 'transparent',
               color: activeTab === cat.id ? cat.color : 'var(--text-dim)',
-              border: `1px solid ${activeTab === cat.id ? `${cat.color}30` : 'transparent'}`,
+              border: `1px solid ${activeTab === cat.id ? `${cat.color}25` : 'transparent'}`,
             }}
           >
             {cat.label}
@@ -125,10 +163,7 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
           <div className="space-y-3 p-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-1.5">
-                <div className="flex gap-2">
-                  <div className="h-4 w-16 animate-shimmer-load rounded" />
-                  <div className="h-4 w-20 animate-shimmer-load rounded" />
-                </div>
+                <div className="flex gap-2"><div className="h-4 w-16 animate-shimmer-load rounded" /><div className="h-4 w-20 animate-shimmer-load rounded" /></div>
                 <div className="h-3 w-full animate-shimmer-load rounded" />
                 <div className="h-3 w-3/4 animate-shimmer-load rounded" />
               </div>
@@ -141,7 +176,7 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
         ) : (
           <AnimatePresence mode="popLayout">
             <div className="divide-y" style={{ borderColor: 'var(--border-dim)' }}>
-              {filtered.slice(0, 25).map((item, i) => {
+              {filtered.slice(0, 30).map((item, i) => {
                 const cat = item._cat;
                 const badgeClass = BADGE_MAP[cat] || 'badge-blue';
 
@@ -153,11 +188,17 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
                     rel="noopener noreferrer"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.02 }}
+                    transition={{ delay: i * 0.015 }}
                     className="group block px-4 py-2.5 transition-colors hover:bg-[var(--bg-hover)]"
                     style={{ borderColor: 'var(--border-dim)' }}
                   >
                     <div className="flex items-center gap-2 mb-1">
+                      {item.isBreaking && (
+                        <span className="breaking-indicator rounded px-1 py-0.5 text-[7px] font-bold uppercase"
+                          style={{ background: 'rgba(255,59,92,0.15)', color: '#ff3b5c', border: '1px solid rgba(255,59,92,0.25)' }}>
+                          URGENTE
+                        </span>
+                      )}
                       <span className={`badge ${badgeClass}`}>{cat}</span>
                       <span className="text-[9px]" style={{ color: 'var(--text-dim)' }}>{item.source}</span>
                       <span className="flex-1" />
@@ -166,7 +207,7 @@ export default function IntelStream({ items, loading }: IntelStreamProps) {
                       </span>
                     </div>
                     <p className="line-clamp-2 text-[11px] leading-relaxed group-hover:text-white transition-colors"
-                      style={{ color: 'var(--text-secondary)' }}>
+                      style={{ color: item.isBreaking ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                       {item.title}
                     </p>
                     {item.description && (

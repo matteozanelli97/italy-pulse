@@ -7,9 +7,10 @@ interface TopBarProps {
   activeSources: number;
   totalSources: number;
   dataPoints: number;
+  aiSummary?: string;
 }
 
-export default function TopBar({ activeSources, totalSources, dataPoints }: TopBarProps) {
+export default function TopBar({ activeSources, totalSources, dataPoints, aiSummary }: TopBarProps) {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const [ping, setPing] = useState(14);
@@ -46,37 +47,35 @@ export default function TopBar({ activeSources, totalSources, dataPoints }: TopB
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="relative z-50 flex h-11 items-center justify-between border-b px-4"
-      style={{ background: 'var(--bg-deep)', borderColor: 'var(--border-dim)' }}
+      style={{ background: '#0a0a0a', borderColor: 'var(--border-dim)' }}
     >
       {/* Left: Branding */}
       <div className="flex items-center gap-3">
-        {/* Hex logo */}
         <div className="relative flex h-7 w-7 items-center justify-center">
           <svg viewBox="0 0 28 28" className="h-7 w-7">
             <polygon
               points="14,1 25,7.5 25,20.5 14,27 3,20.5 3,7.5"
               fill="none"
-              stroke="var(--accent-blue)"
+              stroke="var(--accent-cyan)"
               strokeWidth="1.5"
-              opacity="0.8"
+              opacity="0.7"
             />
             <polygon
               points="14,5 21,9 21,19 14,23 7,19 7,9"
-              fill="rgba(56,139,255,0.1)"
-              stroke="var(--accent-blue)"
+              fill="rgba(0,212,255,0.06)"
+              stroke="var(--accent-cyan)"
               strokeWidth="0.5"
-              opacity="0.6"
+              opacity="0.5"
             />
-            <text x="14" y="17" textAnchor="middle" fill="var(--accent-blue)" fontSize="10" fontWeight="bold" fontFamily="monospace">IP</text>
+            <text x="14" y="17" textAnchor="middle" fill="var(--accent-cyan)" fontSize="10" fontWeight="bold" fontFamily="monospace">IP</text>
           </svg>
-          <div className="absolute inset-0 animate-pulse-ring rounded-full border border-blue-500/20 pointer-events-none" />
+          <div className="absolute inset-0 animate-pulse-ring rounded-full border border-cyan-500/20 pointer-events-none" />
         </div>
         <div className="flex items-center gap-2">
           <span className="font-display text-[17px] tracking-[0.12em] text-white">
-            ITALY <span style={{ color: 'var(--accent-blue)' }}>PULSE</span>
+            ITALY <span style={{ color: 'var(--accent-cyan)' }}>PULSE</span>
           </span>
-          {/* Waveform */}
-          <svg viewBox="0 0 40 12" className="h-3 w-10 opacity-60">
+          <svg viewBox="0 0 40 12" className="h-3 w-10 opacity-50">
             <path d="M0 6 Q3 2 6 6 T12 6 T18 6 T24 6 T30 6 T36 6 L40 6" fill="none" stroke="var(--accent-cyan)" strokeWidth="1.2">
               <animate attributeName="d" dur="2s" repeatCount="indefinite"
                 values="M0 6 Q3 2 6 6 T12 6 T18 6 T24 6 T30 6 T36 6 L40 6;M0 6 Q3 10 6 6 T12 6 T18 6 T24 6 T30 6 T36 6 L40 6;M0 6 Q3 2 6 6 T12 6 T18 6 T24 6 T30 6 T36 6 L40 6" />
@@ -88,22 +87,23 @@ export default function TopBar({ activeSources, totalSources, dataPoints }: TopB
         </div>
       </div>
 
-      {/* Center: Status indicators */}
-      <div className="hidden items-center gap-5 lg:flex">
+      {/* Center: Status indicators + AI summary */}
+      <div className="hidden items-center gap-4 lg:flex">
         <StatusPill icon={<LockIcon />} label="AES-256" value="E2E" color="emerald" />
         <StatusPill
           icon={<NodeIcon />}
           label="NODI"
-          value={`${activeSources}/${totalSources} ON`}
+          value={`${activeSources}/${totalSources}`}
           color={activeSources === totalSources ? 'emerald' : 'amber'}
         />
-        <StatusPill icon={<BoltIcon />} label="PING" value={`${ping}MS`} color="blue" />
-        <StatusPill icon={<DataIcon />} label="DATA" value={`${dataPoints.toLocaleString('it-IT')}`} color="blue" />
-        <div className="flex items-center gap-1.5 font-mono text-[10px]" style={{ color: 'var(--text-dim)' }}>
-          <span>LAT: 41.9028° N</span>
-          <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <span>LNG: 12.4964° E</span>
-        </div>
+        <StatusPill icon={<BoltIcon />} label="PING" value={`${ping}MS`} color="cyan" />
+        <StatusPill icon={<DataIcon />} label="DATA" value={`${dataPoints.toLocaleString('it-IT')}`} color="cyan" />
+        {aiSummary && (
+          <div className="max-w-[220px] truncate rounded-md px-2 py-1 text-[9px]"
+            style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.12)', color: 'var(--accent-purple)' }}>
+            <span className="mr-1 opacity-60">AI:</span>{aiSummary}
+          </div>
+        )}
       </div>
 
       {/* Right: Date + Time */}
@@ -123,13 +123,14 @@ export default function TopBar({ activeSources, totalSources, dataPoints }: TopB
 }
 
 function StatusPill({ icon, label, value, color }: {
-  icon: React.ReactNode; label: string; value: string; color: 'emerald' | 'amber' | 'blue' | 'red';
+  icon: React.ReactNode; label: string; value: string; color: 'emerald' | 'amber' | 'blue' | 'red' | 'cyan';
 }) {
   const colors = {
-    emerald: { dot: '#00e87b', text: '#00e87b', bg: 'rgba(0,232,123,0.06)', border: 'rgba(0,232,123,0.15)' },
-    amber: { dot: '#ffb800', text: '#ffb800', bg: 'rgba(255,184,0,0.06)', border: 'rgba(255,184,0,0.15)' },
-    blue: { dot: '#388bff', text: '#388bff', bg: 'rgba(56,139,255,0.06)', border: 'rgba(56,139,255,0.15)' },
-    red: { dot: '#ff3b5c', text: '#ff3b5c', bg: 'rgba(255,59,92,0.06)', border: 'rgba(255,59,92,0.15)' },
+    emerald: { dot: '#00e87b', text: '#00e87b', bg: 'rgba(0,232,123,0.05)', border: 'rgba(0,232,123,0.12)' },
+    amber: { dot: '#ffb800', text: '#ffb800', bg: 'rgba(255,184,0,0.05)', border: 'rgba(255,184,0,0.12)' },
+    blue: { dot: '#388bff', text: '#388bff', bg: 'rgba(56,139,255,0.05)', border: 'rgba(56,139,255,0.12)' },
+    red: { dot: '#ff3b5c', text: '#ff3b5c', bg: 'rgba(255,59,92,0.05)', border: 'rgba(255,59,92,0.12)' },
+    cyan: { dot: '#00d4ff', text: '#00d4ff', bg: 'rgba(0,212,255,0.05)', border: 'rgba(0,212,255,0.12)' },
   }[color];
 
   return (
@@ -144,7 +145,6 @@ function StatusPill({ icon, label, value, color }: {
   );
 }
 
-// ─── Inline SVG Icons ───
 function LockIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
@@ -155,9 +155,12 @@ function LockIcon() {
 
 function NodeIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-      <circle cx="8" cy="4" r="2" /><circle cx="4" cy="12" r="2" /><circle cx="12" cy="12" r="2" />
-      <path d="M8 6v2M6.5 10.5L7.5 8.5M9.5 10.5L8.5 8.5" stroke="currentColor" strokeWidth="1" fill="none" />
+    <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
+      <circle cx="8" cy="3.5" r="1.5" fill="currentColor" />
+      <circle cx="4" cy="12.5" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="12.5" r="1.5" fill="currentColor" />
+      <line x1="8" y1="5" x2="5" y2="11" stroke="currentColor" strokeWidth="1" />
+      <line x1="8" y1="5" x2="11" y2="11" stroke="currentColor" strokeWidth="1" />
     </svg>
   );
 }
@@ -173,8 +176,10 @@ function BoltIcon() {
 function DataIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-      <rect x="1" y="8" width="3" height="6" rx="0.5" /><rect x="5" y="5" width="3" height="9" rx="0.5" />
-      <rect x="9" y="2" width="3" height="12" rx="0.5" /><rect x="13" y="6" width="2" height="8" rx="0.5" />
+      <rect x="1" y="8" width="3" height="6" rx="0.5" />
+      <rect x="5" y="5" width="3" height="9" rx="0.5" />
+      <rect x="9" y="2" width="3" height="12" rx="0.5" />
+      <rect x="13" y="6" width="2" height="8" rx="0.5" />
     </svg>
   );
 }
@@ -182,8 +187,8 @@ function DataIcon() {
 function WifiIcon() {
   return (
     <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" style={{ color: 'var(--accent-emerald)' }}>
-      <path d="M1.5 5.5a9 9 0 0113 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-      <path d="M4 8.5a5.5 5.5 0 018 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+      <path d="M1.5 5.5a9 9 0 0113 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+      <path d="M4 8.5a5.5 5.5 0 018 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
       <path d="M6.5 11a2.5 2.5 0 013 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <circle cx="8" cy="13" r="1" fill="currentColor" />
     </svg>

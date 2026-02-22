@@ -71,6 +71,7 @@ export interface NewsItem {
   imageUrl?: string;
   latitude?: number;
   longitude?: number;
+  isBreaking?: boolean;
 }
 
 // --- Air Quality ---
@@ -94,6 +95,36 @@ export interface SystemStatus {
   dataPoints: number;
 }
 
+// --- Transport ---
+export interface TransportAlert {
+  id: string;
+  type: 'train' | 'flight' | 'road';
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
+  route?: string;
+}
+
+// --- Energy / Utilities ---
+export interface EnergyData {
+  type: string;
+  value: number;
+  unit: string;
+  change: number;
+  timestamp: string;
+}
+
+// --- Chat ---
+export interface ChatMessage {
+  id: string;
+  nickname: string;
+  avatar: string;
+  message: string;
+  timestamp: string;
+  location: string;
+}
+
 // --- Dashboard State ---
 export interface DashboardState {
   selectedEvent: MapMarker | null;
@@ -101,4 +132,12 @@ export interface DashboardState {
   mapCenter: GeoCoord;
   mapZoom: number;
   isLive: boolean;
+}
+
+// --- Tab system ---
+export interface TabConfig {
+  id: string;
+  moduleId: string;
+  label: string;
+  order: number;
 }

@@ -1,5 +1,5 @@
 // ============================================================
-// ITALY PULSE — OSINT Dashboard Types
+// ITALY PULSE — OSINT Dashboard Types (C4ISR)
 // ============================================================
 
 // --- Map & Geolocation ---
@@ -11,10 +11,18 @@ export interface GeoCoord {
 export interface MapMarker {
   id: string;
   position: GeoCoord;
-  type: 'earthquake' | 'weather' | 'news' | 'airquality' | 'flight';
+  type: 'earthquake' | 'weather' | 'news' | 'airquality' | 'flight' | 'cyber' | 'naval';
   label: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
   data?: unknown;
+}
+
+export interface FlyToTarget {
+  lng: number;
+  lat: number;
+  zoom?: number;
+  pitch?: number;
+  bearing?: number;
 }
 
 // --- Seismic (INGV) ---
@@ -86,15 +94,6 @@ export interface AirQualityStation {
   lastUpdate: string;
 }
 
-// --- System Status ---
-export interface SystemStatus {
-  uptime: number;
-  activeSources: number;
-  totalSources: number;
-  lastSync: string;
-  dataPoints: number;
-}
-
 // --- Transport ---
 export interface TransportAlert {
   id: string;
@@ -106,12 +105,57 @@ export interface TransportAlert {
   route?: string;
 }
 
-// --- Energy / Utilities ---
+// --- Energy ---
 export interface EnergyData {
   type: string;
   value: number;
   unit: string;
   change: number;
+  timestamp: string;
+}
+
+// --- Flights (simulated OSINT) ---
+export interface FlightTrack {
+  id: string;
+  callsign: string;
+  origin: string;
+  destination: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  speed: number;
+  heading: number;
+  type: 'commercial' | 'military' | 'cargo' | 'private';
+  squawk?: string;
+  timestamp: string;
+}
+
+// --- Cyber Threats (simulated) ---
+export interface CyberThreat {
+  id: string;
+  type: 'ddos' | 'malware' | 'phishing' | 'intrusion' | 'ransomware' | 'data_breach';
+  sourceIP: string;
+  sourceCountry: string;
+  targetSector: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  timestamp: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+// --- Naval/AIS (simulated) ---
+export interface NavalTrack {
+  id: string;
+  mmsi: string;
+  name: string;
+  type: 'cargo' | 'tanker' | 'military' | 'passenger' | 'fishing';
+  latitude: number;
+  longitude: number;
+  speed: number;
+  heading: number;
+  destination: string;
+  flag: string;
   timestamp: string;
 }
 
@@ -125,6 +169,15 @@ export interface ChatMessage {
   location: string;
 }
 
+// --- System ---
+export interface SystemStatus {
+  uptime: number;
+  activeSources: number;
+  totalSources: number;
+  lastSync: string;
+  dataPoints: number;
+}
+
 // --- Dashboard State ---
 export interface DashboardState {
   selectedEvent: MapMarker | null;
@@ -134,10 +187,12 @@ export interface DashboardState {
   isLive: boolean;
 }
 
-// --- Tab system ---
-export interface TabConfig {
-  id: string;
-  moduleId: string;
+// --- Module system ---
+export type ModuleId = 'seismic' | 'weather' | 'financial' | 'airquality' | 'transport' | 'energy' | 'flights' | 'cyber' | 'naval' | 'intel';
+
+export interface ModuleConfig {
+  id: ModuleId;
   label: string;
-  order: number;
+  description: string;
+  icon: string;
 }

@@ -44,7 +44,12 @@ const MODULE_COMPONENTS: Record<ModuleId, React.ComponentType<{ search: string }
   intel: IntelModule,
 };
 
-function SortableModuleCard({ moduleId, search, onReplace }: { moduleId: ModuleId; search: string; onReplace: (id: ModuleId) => void }) {
+function SortableModuleCard({ moduleId, search, onRemove, onReplace }: {
+  moduleId: ModuleId;
+  search: string;
+  onRemove: () => void;
+  onReplace: (id: ModuleId) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: moduleId });
   const [showReplace, setShowReplace] = useState(false);
   const activeModules = useStore((s) => s.activeModules);
@@ -62,8 +67,8 @@ function SortableModuleCard({ moduleId, search, onReplace }: { moduleId: ModuleI
 
   return (
     <div ref={setNodeRef} style={style} className="module-card relative">
-      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--border-dim)' }}>
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors" title="Trascina per riordinare">
+      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-deep)' }}>
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors" title="Trascina">
           <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" style={{ color: 'var(--text-muted)' }}>
             <circle cx="5" cy="4" r="1" fill="currentColor" /><circle cx="11" cy="4" r="1" fill="currentColor" />
             <circle cx="5" cy="8" r="1" fill="currentColor" /><circle cx="11" cy="8" r="1" fill="currentColor" />
@@ -73,16 +78,26 @@ function SortableModuleCard({ moduleId, search, onReplace }: { moduleId: ModuleI
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-primary)' }}>
           {mod?.label}
         </span>
-        <button onClick={() => setShowReplace(!showReplace)} className="rounded p-0.5 hover:bg-[var(--bg-hover)] transition-colors" title="Sostituisci modulo">
+        <button onClick={() => setShowReplace(!showReplace)}
+          className="rounded p-0.5 hover:bg-[var(--bg-hover)] transition-colors" title="Sostituisci">
           <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3" style={{ color: 'var(--text-dim)' }}>
             <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
         </button>
+        {activeModules.length > 1 && (
+          <button onClick={onRemove}
+            className="rounded p-0.5 hover:bg-[rgba(239,68,68,0.1)] transition-colors" title="Rimuovi">
+            <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3" style={{ color: 'var(--text-dim)' }}>
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
         {showReplace && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden border-b" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-deep)' }}>
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+            className="overflow-hidden border-b" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-deepest)' }}>
             <div className="p-2 grid grid-cols-2 gap-1">
               {availableModules.map((m) => (
                 <button key={m.id} onClick={() => { onReplace(m.id); setShowReplace(false); }}
@@ -96,7 +111,7 @@ function SortableModuleCard({ moduleId, search, onReplace }: { moduleId: ModuleI
         )}
       </AnimatePresence>
 
-      <div className="p-3 max-h-[calc(50vh-60px)] overflow-y-auto">
+      <div className="p-3 max-h-[calc(33vh-50px)] overflow-y-auto">
         <Component search={search} />
       </div>
     </div>
@@ -108,6 +123,8 @@ export default function LeftPanel() {
   const activeModules = useStore((s) => s.activeModules);
   const setActiveModules = useStore((s) => s.setActiveModules);
   const swapModule = useStore((s) => s.swapModule);
+  const addModule = useStore((s) => s.addModule);
+  const removeModule = useStore((s) => s.removeModule);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -119,36 +136,50 @@ export default function LeftPanel() {
     const oldIndex = activeModules.indexOf(active.id as ModuleId);
     const newIndex = activeModules.indexOf(over.id as ModuleId);
     if (oldIndex === -1 || newIndex === -1) return;
-    const next = [...activeModules] as [ModuleId, ModuleId];
+    const next = [...activeModules];
     [next[oldIndex], next[newIndex]] = [next[newIndex], next[oldIndex]];
     setActiveModules(next);
   }, [activeModules, setActiveModules]);
 
-  const handleReplace = useCallback((slotIndex: 0 | 1) => (newModule: ModuleId) => {
+  const handleReplace = useCallback((slotIndex: number) => (newModule: ModuleId) => {
     swapModule(slotIndex, newModule);
   }, [swapModule]);
+
+  const canAdd = activeModules.length < 3;
 
   return (
     <motion.aside
       initial={{ x: -340, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-      className="hidden lg:flex w-[320px] flex-shrink-0 flex-col overflow-hidden border-r bg-dot-pattern"
-      style={{ background: '#050505', borderColor: 'var(--border-dim)' }}
+      className="hidden lg:flex w-[320px] flex-shrink-0 flex-col overflow-hidden border-r"
+      style={{ background: 'var(--bg-deep)', borderColor: 'var(--border-dim)' }}
     >
-      <div className="border-b px-3 py-2" style={{ borderColor: 'var(--border-dim)' }}>
+      <div className="border-b px-3 py-2" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-panel)' }}>
         <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-dim)' }}>
           <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 flex-shrink-0">
             <circle cx="7" cy="7" r="4.5" stroke="var(--text-muted)" strokeWidth="1.5" />
             <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ricerca dati..." className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[var(--text-muted)]" style={{ color: 'var(--text-secondary)' }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ricerca dati..."
+            className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[var(--text-muted)]" style={{ color: 'var(--text-secondary)' }} />
           {search && <button onClick={() => setSearch('')} className="text-[12px] hover:text-white transition-colors" style={{ color: 'var(--text-dim)' }}>×</button>}
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>MODULI ATTIVI: 2 / MAX 2</span>
-          <span className="text-[8px]" style={{ color: 'var(--text-muted)' }}>·</span>
-          <span className="text-[8px]" style={{ color: 'var(--text-dim)' }}>Trascina per riordinare</span>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
+            MODULI: {activeModules.length} / 3
+          </span>
+          {canAdd && (
+            <button onClick={() => {
+              const available = MODULES.find((m) => !activeModules.includes(m.id));
+              if (available) addModule(available.id);
+            }}
+              className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider transition-all hover:bg-[var(--bg-hover)]"
+              style={{ color: 'var(--blue-400)', border: '1px solid var(--border-dim)' }}>
+              <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              Aggiungi
+            </button>
+          )}
         </div>
       </div>
 
@@ -156,7 +187,13 @@ export default function LeftPanel() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={activeModules} strategy={verticalListSortingStrategy}>
             {activeModules.map((moduleId, idx) => (
-              <SortableModuleCard key={moduleId} moduleId={moduleId} search={search} onReplace={handleReplace(idx as 0 | 1)} />
+              <SortableModuleCard
+                key={moduleId}
+                moduleId={moduleId}
+                search={search}
+                onRemove={() => removeModule(moduleId)}
+                onReplace={handleReplace(idx)}
+              />
             ))}
           </SortableContext>
         </DndContext>

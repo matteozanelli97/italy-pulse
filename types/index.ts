@@ -187,6 +187,18 @@ export interface DashboardState {
   isLive: boolean;
 }
 
+// --- Sentiment Heatmap ---
+export interface SentimentHotspot {
+  id: string;
+  lat: number;
+  lng: number;
+  city: string;
+  intensity: number; // 0-1
+  sentiment: 'positive' | 'negative' | 'neutral';
+  topic: string;
+  count: number;
+}
+
 // --- Module system ---
 export type ModuleId = 'seismic' | 'weather' | 'financial' | 'airquality' | 'transport' | 'energy' | 'flights' | 'cyber' | 'naval' | 'intel';
 

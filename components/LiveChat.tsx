@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStore } from '@/lib/store';
 import type { ChatMessage } from '@/types';
 
 const AVATAR_COLORS = ['#3b82f6', '#60a5fa', '#93bbfd', '#f59e0b', '#ef4444', '#64748b', '#94a3b8'];
@@ -41,7 +42,8 @@ function generateBotMessages(): ChatMessage[] {
 }
 
 export default function LiveChat() {
-  const [open, setOpen] = useState(false);
+  const open = useStore((s) => s.chatOpen);
+  const setOpen = useStore((s) => s.setChatOpen);
   const [messages, setMessages] = useState<ChatMessage[]>(() => generateBotMessages());
   const [input, setInput] = useState('');
   const [nickname] = useState(() => NAMES[Math.floor(Math.random() * NAMES.length)]);

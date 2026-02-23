@@ -7,12 +7,11 @@ import type { ModuleId } from '@/types';
 
 export default function IconSidebar() {
   const activeModules = useStore((s) => s.activeModules);
-  const swapModule = useStore((s) => s.swapModule);
+  const addModule = useStore((s) => s.addModule);
 
   const handleClick = (moduleId: ModuleId) => {
     if (activeModules.includes(moduleId)) return;
-    // Replace the second slot (index 1) when clicking a new module
-    swapModule(1, moduleId);
+    addModule(moduleId);
   };
 
   return (

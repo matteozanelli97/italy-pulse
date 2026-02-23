@@ -1,43 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  /* ─── Background: Pure black / charcoal ─── */
-  --bg-deepest: #000000;
-  --bg-deep: #0a0a0a;
-  --bg-panel: #111111;
-  --bg-card: #161616;
-  --bg-hover: #1c1c1c;
-  --bg-active: #222222;
+  /* ─── Background: Deep black institutional ─── */
+  --bg-deepest: #030303;
+  --bg-deep: #050505;
+  --bg-panel: #0a0a0c;
+  --bg-card: #0d0e12;
+  --bg-hover: #111318;
+  --bg-active: #151820;
 
-  /* ─── Borders: Neutral gray ─── */
-  --border-dim: rgba(255, 255, 255, 0.06);
-  --border-subtle: rgba(255, 255, 255, 0.10);
-  --border-medium: rgba(255, 255, 255, 0.18);
-  --border-bright: rgba(255, 255, 255, 0.30);
+  /* ─── Intelligence Blue Palette ─── */
+  --blue-950: #0a1628;
+  --blue-900: #0c1e3a;
+  --blue-800: #1e3a5f;
+  --blue-700: #1d4ed8;
+  --blue-600: #2563eb;
+  --blue-500: #3b82f6;
+  --blue-400: #60a5fa;
+  --blue-300: #93bbfd;
 
-  /* ─── Accents: Keep data colors vibrant ─── */
-  --accent-blue: #388bff;
-  --accent-cyan: #00d4ff;
-  --accent-emerald: #00e87b;
-  --accent-amber: #ffb800;
-  --accent-red: #ff3b5c;
-  --accent-purple: #a855f7;
-  --accent-orange: #ff8a3d;
+  /* ─── Borders: Blue-tinted ─── */
+  --border-dim: rgba(59, 130, 246, 0.06);
+  --border-subtle: rgba(59, 130, 246, 0.10);
+  --border-medium: rgba(59, 130, 246, 0.18);
+  --border-bright: rgba(59, 130, 246, 0.30);
+
+  /* ─── Accent: Single blue family ─── */
+  --accent: #3b82f6;
+  --accent-dim: #60a5fa;
+  --accent-bright: #93bbfd;
+  --accent-muted: rgba(59, 130, 246, 0.15);
+
+  /* ─── Severity only (data colors, not UI chrome) ─── */
+  --severity-low: #3b82f6;
+  --severity-medium: #f59e0b;
+  --severity-high: #ef4444;
+  --severity-critical: #dc2626;
 
   /* ─── Text ─── */
-  --text-primary: #e8f0ff;
-  --text-secondary: #9ca3af;
-  --text-dim: #6b7280;
-  --text-muted: #374151;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-dim: #64748b;
+  --text-muted: #334155;
 
   /* ─── Glows ─── */
-  --glow-blue: 0 0 20px rgba(56, 139, 255, 0.12);
-  --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.12);
-
-  /* ─── Tab/Panel: Dark gray ─── */
-  --tab-bg: #1a1a1a;
-  --tab-active: #252525;
-  --tab-border: rgba(255, 255, 255, 0.08);
+  --glow: 0 0 20px rgba(59, 130, 246, 0.10);
+  --glow-bright: 0 0 30px rgba(59, 130, 246, 0.15);
 }
 
 @theme inline {
@@ -50,7 +58,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(59, 130, 246, 0.08) transparent;
 }
 
 html, body {
@@ -59,72 +67,68 @@ html, body {
 }
 
 body {
-  background: #000000;
+  background: #030303;
   color: var(--text-primary);
   font-family: "Inter", "DM Sans", system-ui, sans-serif;
 }
 
-/* ==================== LEAFLET DARK OVERRIDES ==================== */
-.leaflet-container {
-  background: #000000 !important;
+/* ==================== DOT PATTERN ==================== */
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(59, 130, 246, 0.07) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ==================== MAPLIBRE OVERRIDES ==================== */
+.maplibregl-map {
   font-family: inherit !important;
 }
 
-.leaflet-popup-content-wrapper {
+.maplibregl-popup-content {
   background: var(--bg-panel) !important;
   border: 1px solid var(--border-medium) !important;
-  box-shadow: var(--glow-blue), 0 8px 32px rgba(0,0,0,0.8) !important;
+  box-shadow: var(--glow-bright), 0 8px 32px rgba(0,0,0,0.8) !important;
   border-radius: 10px !important;
   color: var(--text-primary) !important;
-}
-
-.leaflet-popup-content {
-  margin: 10px 14px !important;
+  padding: 10px 14px !important;
   font-size: 11px !important;
-  line-height: 1.5 !important;
   font-family: "JetBrains Mono", monospace !important;
 }
 
-.leaflet-popup-tip {
-  background: var(--bg-panel) !important;
-  border: 1px solid var(--border-medium) !important;
-  box-shadow: none !important;
+.maplibregl-popup-tip {
+  border-top-color: var(--bg-panel) !important;
 }
 
-.leaflet-popup-close-button {
+.maplibregl-popup-close-button {
   color: var(--text-dim) !important;
+  font-size: 16px !important;
+  padding: 4px 8px !important;
 }
 
-.leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.9) !important;
+.maplibregl-ctrl-attrib {
+  background: rgba(3, 3, 3, 0.9) !important;
   color: var(--text-muted) !important;
   font-size: 9px !important;
-  border: none !important;
 }
 
-.leaflet-control-attribution a {
-  color: var(--text-dim) !important;
-}
-
-.leaflet-control-zoom {
+.maplibregl-ctrl-group {
+  background: var(--bg-panel) !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: 8px !important;
-  overflow: hidden;
 }
 
-.leaflet-control-zoom a {
+.maplibregl-ctrl-group button {
   background: var(--bg-panel) !important;
-  color: var(--text-secondary) !important;
   border-color: var(--border-dim) !important;
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
-  font-size: 14px !important;
+  color: var(--text-secondary) !important;
 }
 
-.leaflet-control-zoom a:hover {
+.maplibregl-ctrl-group button:hover {
   background: var(--bg-hover) !important;
-  color: var(--accent-cyan) !important;
+  color: var(--accent) !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--border-dim) !important;
 }
 
 /* ==================== SCROLLBAR ==================== */
@@ -138,12 +142,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(59, 130, 246, 0.12);
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(59, 130, 246, 0.22);
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -163,8 +167,8 @@ body {
 }
 
 @keyframes data-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent-cyan); }
-  50% { box-shadow: 0 0 8px 2px rgba(0, 212, 255, 0.2); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 8px 2px rgba(59, 130, 246, 0.2); }
 }
 
 @keyframes shimmer-load {
@@ -172,19 +176,14 @@ body {
   100% { background-position: 200% 0; }
 }
 
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink-caret {
-  0%, 100% { border-color: transparent; }
-  50% { border-color: var(--accent-cyan); }
-}
-
 @keyframes slide-up-fade {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes wave-flow {
@@ -193,35 +192,21 @@ body {
   100% { d: path("M0 6 Q5 0 10 6 T20 6 T30 6 T40 6"); }
 }
 
-@keyframes float-up {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes breaking-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s ease-out infinite;
-}
-
-.animate-glow-breathe {
-  animation: glow-breathe 3s ease-in-out infinite;
-}
-
-.animate-data-pulse {
-  animation: data-pulse 2s ease-in-out infinite;
-}
+.animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+.animate-glow-breathe { animation: glow-breathe 3s ease-in-out infinite; }
+.animate-data-pulse { animation: data-pulse 2s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up-fade 0.4s ease-out forwards; }
+.animate-float-up { animation: float-up 0.5s ease-out forwards; }
 
 .animate-shimmer-load {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
   background-size: 200% 100%;
   animation: shimmer-load 1.8s ease-in-out infinite;
-}
-
-.animate-slide-up {
-  animation: slide-up-fade 0.4s ease-out forwards;
-}
-
-.animate-float-up {
-  animation: float-up 0.5s ease-out forwards;
 }
 
 /* ==================== UTILITY CLASSES ==================== */
@@ -231,26 +216,12 @@ body {
   backdrop-filter: blur(16px);
 }
 
-.panel-glass-bright {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  backdrop-filter: blur(16px);
+.text-glow {
+  text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
 }
 
-.text-glow-blue {
-  text-shadow: 0 0 12px rgba(56, 139, 255, 0.4);
-}
-
-.text-glow-cyan {
-  text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
-}
-
-.text-glow-red {
-  text-shadow: 0 0 12px rgba(255, 59, 92, 0.4);
-}
-
-.border-glow-blue {
-  box-shadow: inset 0 0 20px rgba(56, 139, 255, 0.04), 0 0 20px rgba(56, 139, 255, 0.06);
+.border-glow {
+  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.04), 0 0 20px rgba(59, 130, 246, 0.06);
 }
 
 /* ─── Sidebar items ─── */
@@ -268,14 +239,14 @@ body {
 }
 
 .icon-sidebar-item:hover {
-  color: var(--accent-cyan);
+  color: var(--blue-400);
   background: var(--bg-hover);
 }
 
 .icon-sidebar-item.active {
-  color: var(--accent-cyan);
-  background: rgba(0, 212, 255, 0.08);
-  box-shadow: inset 0 0 12px rgba(0, 212, 255, 0.06);
+  color: var(--blue-400);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.06);
 }
 
 .icon-sidebar-item.active::before {
@@ -285,9 +256,9 @@ body {
   top: 20%;
   bottom: 20%;
   width: 2px;
-  background: var(--accent-cyan);
+  background: var(--blue-500);
   border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
 /* ─── Module card ─── */
@@ -303,7 +274,7 @@ body {
   border-color: var(--border-subtle);
 }
 
-/* ─── Category badges ─── */
+/* ─── Badge — single blue style ─── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -314,15 +285,15 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--blue-400);
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
-.badge-red { background: rgba(255, 59, 92, 0.10); color: #ff3b5c; border: 1px solid rgba(255, 59, 92, 0.18); }
-.badge-blue { background: rgba(56, 139, 255, 0.10); color: #388bff; border: 1px solid rgba(56, 139, 255, 0.18); }
-.badge-emerald { background: rgba(0, 232, 123, 0.10); color: #00e87b; border: 1px solid rgba(0, 232, 123, 0.18); }
-.badge-amber { background: rgba(255, 184, 0, 0.10); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.18); }
-.badge-purple { background: rgba(168, 85, 247, 0.10); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.18); }
-.badge-cyan { background: rgba(0, 212, 255, 0.10); color: #00d4ff; border: 1px solid rgba(0, 212, 255, 0.18); }
-.badge-orange { background: rgba(255, 138, 61, 0.10); color: #ff8a3d; border: 1px solid rgba(255, 138, 61, 0.18); }
+.badge-severity-low { background: rgba(59, 130, 246, 0.08); color: #3b82f6; border-color: rgba(59, 130, 246, 0.18); }
+.badge-severity-medium { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border-color: rgba(245, 158, 11, 0.18); }
+.badge-severity-high { background: rgba(239, 68, 68, 0.08); color: #ef4444; border-color: rgba(239, 68, 68, 0.18); }
+.badge-severity-critical { background: rgba(220, 38, 38, 0.10); color: #dc2626; border-color: rgba(220, 38, 38, 0.20); }
 
 /* ─── Layer control toggle ─── */
 .layer-btn {
@@ -345,71 +316,34 @@ body {
 }
 
 .layer-btn.active {
-  border-color: var(--accent-cyan);
-  background: rgba(0, 212, 255, 0.08);
-  color: var(--accent-cyan);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.12);
+  border-color: var(--blue-500);
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--blue-400);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.12);
 }
 
-/* ─── Tab bar ─── */
-.tab-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
+/* ─── DnD drag overlay ─── */
+.dnd-drag-overlay {
+  opacity: 0.85;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.1);
+  border-radius: 10px;
+  cursor: grabbing;
 }
 
-.tab-item:hover {
-  color: var(--text-secondary);
-  background: var(--bg-hover);
+.dnd-placeholder {
+  border: 2px dashed rgba(59, 130, 246, 0.25);
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.03);
+  min-height: 80px;
 }
 
-.tab-item.active {
-  color: var(--accent-cyan);
-  background: var(--tab-active);
-  border-color: var(--tab-border);
-}
+/* ─── Chat ─── */
+.chat-msg { animation: float-up 0.3s ease-out; }
 
-.tab-item .tab-close {
-  opacity: 0;
-  transition: opacity 0.15s;
-}
+/* ─── Breaking news ─── */
+.breaking-indicator { animation: breaking-flash 1.5s ease-in-out infinite; }
 
-.tab-item:hover .tab-close,
-.tab-item.active .tab-close {
-  opacity: 0.6;
-}
-
-.tab-item .tab-close:hover {
-  opacity: 1;
-}
-
-/* ─── Chat bubble ─── */
-.chat-msg {
-  animation: float-up 0.3s ease-out;
-}
-
-/* ─── Breaking news flash ─── */
-@keyframes breaking-flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.breaking-indicator {
-  animation: breaking-flash 1.5s ease-in-out infinite;
-}
-
-/* ─── Initializing animation ─── */
+/* ─── Init dots ─── */
 .init-dots::after {
   content: '';
   animation: init-dots 1.5s steps(3, end) infinite;
@@ -422,7 +356,19 @@ body {
   100% { content: '...'; }
 }
 
-/* ─── Italy map border glow ─── */
-.italy-border-glow {
-  filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.15));
+/* ─── Tactical marker on map ─── */
+.tactical-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--blue-500);
+  border: 2px solid var(--blue-300);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.2);
+  animation: data-pulse 2s ease-in-out infinite;
+}
+
+.tactical-marker-critical {
+  background: #dc2626;
+  border-color: #fca5a5;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5), 0 0 30px rgba(220, 38, 38, 0.2);
 }

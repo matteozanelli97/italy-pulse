@@ -2,35 +2,22 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { NewsItem } from '@/types';
-
-interface IntelStreamProps {
-  items: NewsItem[];
-  loading: boolean;
-  aiSummary?: string;
-  trendingTopics?: { topic: string; count: number; sentiment: 'positive' | 'negative' | 'neutral' }[];
-}
+import { useStore } from '@/lib/store';
 
 const CATEGORIES = [
-  { id: 'all', label: 'Tutte', color: '#00d4ff' },
-  { id: 'breaking', label: 'Urgenti', color: '#ff3b5c' },
-  { id: 'Politica', label: 'Politica', color: '#388bff' },
-  { id: 'Tecnologia', label: 'Tech', color: '#00d4ff' },
-  { id: 'Economia', label: 'Economia', color: '#00e87b' },
-  { id: 'Sicurezza', label: 'Sicurezza', color: '#ff3b5c' },
-  { id: 'Mondo', label: 'Mondo', color: '#a855f7' },
-  { id: 'Sport', label: 'Sport', color: '#ff8a3d' },
-  { id: 'Cronaca', label: 'Cronaca', color: '#ffb800' },
+  { id: 'all', label: 'Tutte' },
+  { id: 'breaking', label: 'Urgenti' },
+  { id: 'Politica', label: 'Politica' },
+  { id: 'Tecnologia', label: 'Tech' },
+  { id: 'Economia', label: 'Economia' },
+  { id: 'Sicurezza', label: 'Sicurezza' },
+  { id: 'Mondo', label: 'Mondo' },
+  { id: 'Sport', label: 'Sport' },
+  { id: 'Cronaca', label: 'Cronaca' },
 ] as const;
 
-const BADGE_MAP: Record<string, string> = {
-  Politica: 'badge-blue', Tecnologia: 'badge-cyan', Economia: 'badge-emerald',
-  Sicurezza: 'badge-red', Mondo: 'badge-purple', Sport: 'badge-orange',
-  Cronaca: 'badge-amber', Generale: 'badge-blue',
-};
-
-function categorize(item: NewsItem): string {
-  const t = (item.title + ' ' + item.description + ' ' + item.category).toLowerCase();
+function categorize(title: string, description: string, category: string): string {
+  const t = (title + ' ' + description + ' ' + category).toLowerCase();
   if (/politic|governo|parlamento|ministro|elezioni|decreto|senato|camera/i.test(t)) return 'Politica';
   if (/tecnolog|digitale|ai\b|cyber|software|startup|app\b|robot|algoritm/i.test(t)) return 'Tecnologia';
   if (/econom|finanz|borsa|mercati|pil|inflaz|banca|spread|euro|lavoro|occupaz/i.test(t)) return 'Economia';
@@ -38,15 +25,18 @@ function categorize(item: NewsItem): string {
   if (/sport|calcio|serie a|champions|olimp|tennis|formula|gol|partita/i.test(t)) return 'Sport';
   if (/mond|internazional|usa|cina|russia|europa|trump|nato|onu|medio.?orient/i.test(t)) return 'Mondo';
   if (/cronaca|incidente|morto|omicidio|arresto|indagine|rapina|droga/i.test(t)) return 'Cronaca';
-  return item.category || 'Generale';
+  return category || 'Generale';
 }
 
-export default function IntelStream({ items, loading, aiSummary, trendingTopics }: IntelStreamProps) {
+export default function IntelStream() {
+  const { data: items, loading } = useStore((s) => s.news);
+  const aiSummary = useStore((s) => s.aiSummary);
+  const trendingTopics = useStore((s) => s.trendingTopics);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
 
   const categorizedItems = useMemo(() =>
-    items.map((item) => ({ ...item, _cat: categorize(item) })),
+    items.map((item) => ({ ...item, _cat: categorize(item.title, item.description, item.category) })),
     [items]
   );
 
@@ -72,14 +62,14 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.45, delay: 0.2, ease: 'easeOut' }}
       className="hidden w-[340px] flex-shrink-0 flex-col overflow-hidden border-l lg:flex"
-      style={{ background: '#0a0a0a', borderColor: 'var(--border-dim)' }}
+      style={{ background: '#050505', borderColor: 'var(--border-dim)' }}
     >
       {/* Header */}
       <div className="border-b px-4 py-2.5" style={{ borderColor: 'var(--border-dim)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(0,212,255,0.06)' }}>
+          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(59,130,246,0.06)' }}>
             <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-              <path d="M2 3h12M2 7h8M2 11h12M2 15h6" stroke="var(--accent-cyan)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M2 3h12M2 7h8M2 11h12M2 15h6" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </span>
           <h2 className="text-[12px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-primary)' }}>
@@ -88,12 +78,12 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
           <div className="flex-1" />
           {breakingCount > 0 && (
             <span className="breaking-indicator rounded-full px-2 py-0.5 font-mono text-[9px] font-bold"
-              style={{ background: 'rgba(255,59,92,0.12)', color: '#ff3b5c', border: '1px solid rgba(255,59,92,0.2)' }}>
+              style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.2)' }}>
               {breakingCount} URGENTI
             </span>
           )}
           <span className="rounded-full px-2 py-0.5 font-mono text-[9px] font-bold"
-            style={{ background: 'rgba(0,212,255,0.06)', color: 'var(--accent-cyan)', border: '1px solid var(--border-dim)' }}>
+            style={{ background: 'rgba(59,130,246,0.06)', color: 'var(--blue-400)', border: '1px solid var(--border-dim)' }}>
             {filtered.length}
           </span>
         </div>
@@ -101,20 +91,20 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
         {/* AI Summary */}
         {aiSummary && (
           <div className="mb-2 rounded-md px-2.5 py-1.5 text-[10px] leading-relaxed"
-            style={{ background: 'rgba(168,85,247,0.05)', border: '1px solid rgba(168,85,247,0.12)', color: 'var(--accent-purple)' }}>
+            style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid var(--border-dim)', color: 'var(--blue-400)' }}>
             <span className="font-bold mr-1 opacity-70">AI</span>{aiSummary}
           </div>
         )}
 
         {/* Trending topics */}
-        {trendingTopics && trendingTopics.length > 0 && (
+        {trendingTopics.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {trendingTopics.slice(0, 4).map((t) => (
               <span key={t.topic} className="rounded px-1.5 py-0.5 text-[8px] font-medium"
                 style={{
-                  background: t.sentiment === 'negative' ? 'rgba(255,59,92,0.06)' : t.sentiment === 'positive' ? 'rgba(0,232,123,0.06)' : 'rgba(255,255,255,0.03)',
-                  color: t.sentiment === 'negative' ? '#ff3b5c' : t.sentiment === 'positive' ? '#00e87b' : 'var(--text-dim)',
-                  border: `1px solid ${t.sentiment === 'negative' ? 'rgba(255,59,92,0.12)' : t.sentiment === 'positive' ? 'rgba(0,232,123,0.12)' : 'var(--border-dim)'}`,
+                  background: t.sentiment === 'negative' ? 'rgba(239,68,68,0.06)' : t.sentiment === 'positive' ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.03)',
+                  color: t.sentiment === 'negative' ? '#ef4444' : t.sentiment === 'positive' ? '#3b82f6' : 'var(--text-dim)',
+                  border: `1px solid ${t.sentiment === 'negative' ? 'rgba(239,68,68,0.12)' : t.sentiment === 'positive' ? 'rgba(59,130,246,0.12)' : 'var(--border-dim)'}`,
                 }}>
                 {t.topic} ({t.count})
               </span>
@@ -136,6 +126,7 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
             className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[var(--text-muted)]"
             style={{ color: 'var(--text-secondary)' }}
           />
+          {search && <button onClick={() => setSearch('')} className="text-[12px] hover:text-white transition-colors" style={{ color: 'var(--text-dim)' }}>×</button>}
         </div>
       </div>
 
@@ -147,9 +138,9 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
             onClick={() => setActiveTab(cat.id)}
             className="flex-shrink-0 rounded-md px-2 py-1 text-[9px] font-semibold uppercase tracking-wider transition-all"
             style={{
-              background: activeTab === cat.id ? `${cat.color}12` : 'transparent',
-              color: activeTab === cat.id ? cat.color : 'var(--text-dim)',
-              border: `1px solid ${activeTab === cat.id ? `${cat.color}25` : 'transparent'}`,
+              background: activeTab === cat.id ? 'rgba(59,130,246,0.08)' : 'transparent',
+              color: activeTab === cat.id ? 'var(--blue-400)' : 'var(--text-dim)',
+              border: `1px solid ${activeTab === cat.id ? 'rgba(59,130,246,0.18)' : 'transparent'}`,
             }}
           >
             {cat.label}
@@ -176,48 +167,43 @@ export default function IntelStream({ items, loading, aiSummary, trendingTopics 
         ) : (
           <AnimatePresence mode="popLayout">
             <div className="divide-y" style={{ borderColor: 'var(--border-dim)' }}>
-              {filtered.slice(0, 30).map((item, i) => {
-                const cat = item._cat;
-                const badgeClass = BADGE_MAP[cat] || 'badge-blue';
-
-                return (
-                  <motion.a
-                    key={item.id}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.015 }}
-                    className="group block px-4 py-2.5 transition-colors hover:bg-[var(--bg-hover)]"
-                    style={{ borderColor: 'var(--border-dim)' }}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      {item.isBreaking && (
-                        <span className="breaking-indicator rounded px-1 py-0.5 text-[7px] font-bold uppercase"
-                          style={{ background: 'rgba(255,59,92,0.15)', color: '#ff3b5c', border: '1px solid rgba(255,59,92,0.25)' }}>
-                          URGENTE
-                        </span>
-                      )}
-                      <span className={`badge ${badgeClass}`}>{cat}</span>
-                      <span className="text-[9px]" style={{ color: 'var(--text-dim)' }}>{item.source}</span>
-                      <span className="flex-1" />
-                      <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                        {timeAgo(item.publishedAt)}
+              {filtered.slice(0, 30).map((item, i) => (
+                <motion.a
+                  key={item.id}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.015 }}
+                  className="group block px-4 py-2.5 transition-colors hover:bg-[var(--bg-hover)]"
+                  style={{ borderColor: 'var(--border-dim)' }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {item.isBreaking && (
+                      <span className="breaking-indicator rounded px-1 py-0.5 text-[7px] font-bold uppercase"
+                        style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.2)' }}>
+                        URGENTE
                       </span>
-                    </div>
-                    <p className="line-clamp-2 text-[11px] leading-relaxed group-hover:text-white transition-colors"
-                      style={{ color: item.isBreaking ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                      {item.title}
-                    </p>
-                    {item.description && (
-                      <p className="mt-0.5 line-clamp-1 text-[10px]" style={{ color: 'var(--text-dim)' }}>
-                        {item.description}
-                      </p>
                     )}
-                  </motion.a>
-                );
-              })}
+                    <span className="badge">{item._cat}</span>
+                    <span className="text-[9px]" style={{ color: 'var(--text-dim)' }}>{item.source}</span>
+                    <span className="flex-1" />
+                    <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                      {timeAgo(item.publishedAt)}
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-[11px] leading-relaxed group-hover:text-white transition-colors"
+                    style={{ color: item.isBreaking ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                    {item.title}
+                  </p>
+                  {item.description && (
+                    <p className="mt-0.5 line-clamp-1 text-[10px]" style={{ color: 'var(--text-dim)' }}>
+                      {item.description}
+                    </p>
+                  )}
+                </motion.a>
+              ))}
             </div>
           </AnimatePresence>
         )}

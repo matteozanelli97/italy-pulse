@@ -2,13 +2,15 @@
 // ITALY PULSE — Constants & Configuration
 // ============================================================
 
-import type { GeoCoord } from '@/types';
+import type { GeoCoord, ModuleConfig } from '@/types';
 
-// Map defaults — centered on Italy
+// Map defaults — centered on Italy with 3D perspective
 export const ITALY_CENTER: GeoCoord = { lat: 42.0, lng: 12.5 };
-export const ITALY_ZOOM = 6;
+export const ITALY_ZOOM = 5.8;
+export const ITALY_PITCH = 50;
+export const ITALY_BEARING = -5;
 
-// Italy geographical bounds for map restriction
+// Italy geographical bounds
 export const ITALY_BOUNDS = {
   north: 47.1,
   south: 35.5,
@@ -17,13 +19,13 @@ export const ITALY_BOUNDS = {
 } as const;
 
 // Polling intervals (ms)
-export const POLL_SEISMIC = 30_000;      // 30s — earthquakes
-export const POLL_WEATHER = 300_000;     // 5min — weather
-export const POLL_MARKETS = 60_000;      // 1min — markets
-export const POLL_NEWS = 120_000;        // 2min — news
-export const POLL_AIR_QUALITY = 600_000; // 10min — air quality
-export const POLL_TRANSPORT = 180_000;   // 3min — transport
-export const POLL_ENERGY = 300_000;      // 5min — energy
+export const POLL_SEISMIC = 30_000;
+export const POLL_WEATHER = 300_000;
+export const POLL_MARKETS = 60_000;
+export const POLL_NEWS = 120_000;
+export const POLL_AIR_QUALITY = 600_000;
+export const POLL_TRANSPORT = 180_000;
+export const POLL_ENERGY = 300_000;
 
 // Italian cities for weather monitoring
 export const MONITORED_CITIES = [
@@ -49,30 +51,29 @@ export const MONITORED_CITIES = [
   { name: 'Aosta', lat: 45.7375, lng: 7.3154 },
 ] as const;
 
-// Severity colors
+// Severity colors — Intelligence Blue palette
 export const SEVERITY_COLORS = {
-  low: '#00ff88',
-  medium: '#ffaa00',
-  high: '#ff4444',
-  critical: '#ff0044',
+  low: '#3b82f6',
+  medium: '#f59e0b',
+  high: '#ef4444',
+  critical: '#dc2626',
 } as const;
 
-// Sidebar modules definition
-export const SIDEBAR_MODULES = [
-  { id: 'dashboard', label: 'Dashboard', description: 'Panoramica generale' },
-  { id: 'radar', label: 'Radar Sismico', description: 'Attività sismica in tempo reale' },
-  { id: 'satellite', label: 'Satelliti', description: 'Monitoraggio satellitare' },
-  { id: 'financial', label: 'Finanza', description: 'Mercati e dati finanziari' },
-  { id: 'naval', label: 'Navale', description: 'Tracking marittimo AIS' },
-  { id: 'cyber', label: 'Cyber Intel', description: 'Minacce informatiche' },
-  { id: 'intel', label: 'Intelligence', description: 'Analisi intelligence' },
-  { id: 'weather', label: 'Meteo', description: 'Condizioni meteorologiche' },
-  { id: 'airquality', label: 'Qualità Aria', description: 'Indice qualità aria' },
-  { id: 'transport', label: 'Trasporti', description: 'Stato trasporti nazionali' },
-  { id: 'energy', label: 'Energia', description: 'Mercato energetico' },
-] as const;
+// Module definitions
+export const MODULES: ModuleConfig[] = [
+  { id: 'seismic', label: 'Radar Sismico', description: 'Attività sismica INGV', icon: 'seismic' },
+  { id: 'financial', label: 'Mercati', description: 'Dati finanziari live', icon: 'financial' },
+  { id: 'weather', label: 'Meteo', description: 'Condizioni meteo Italia', icon: 'weather' },
+  { id: 'airquality', label: 'Qualità Aria', description: 'Indice AQI europeo', icon: 'airquality' },
+  { id: 'transport', label: 'Trasporti', description: 'Stato rete trasporti', icon: 'transport' },
+  { id: 'energy', label: 'Energia', description: 'Mercato energetico', icon: 'energy' },
+  { id: 'flights', label: 'Voli', description: 'Tracking aereo OSINT', icon: 'flights' },
+  { id: 'cyber', label: 'Cyber Intel', description: 'Minacce informatiche', icon: 'cyber' },
+  { id: 'naval', label: 'Navale', description: 'Tracking AIS marittimo', icon: 'naval' },
+  { id: 'intel', label: 'Intelligence', description: 'Analisi OSINT', icon: 'intel' },
+];
 
-// WMO Weather codes to descriptions
+// WMO Weather codes to Italian descriptions
 export const WMO_CODES: Record<number, string> = {
   0: 'Sereno',
   1: 'Prevalentemente sereno',

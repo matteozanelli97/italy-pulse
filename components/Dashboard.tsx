@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import TopBar from './TopBar';
-import IconSidebar, { type SidebarModule } from './IconSidebar';
+import IconSidebar from './IconSidebar';
 import LeftPanel from './LeftPanel';
 import IntelStream from './IntelStream';
 import LiveChat from './LiveChat';
+import { useStore } from '@/lib/store';
+import { generateFlights, generateCyberThreats, generateNavalTracks } from '@/lib/mock-data';
 import {
   POLL_SEISMIC,
   POLL_WEATHER,
@@ -16,41 +18,22 @@ import {
   POLL_TRANSPORT,
   POLL_ENERGY,
 } from '@/lib/constants';
-import type {
-  SeismicEvent,
-  WeatherData,
-  NewsItem,
-  MarketTick,
-  AirQualityStation,
-  TransportAlert,
-  EnergyData,
-} from '@/types';
 
-const MapSection = dynamic(() => import('./MapSection'), { ssr: false });
-
-interface DataSlice<T> {
-  data: T;
-  loading: boolean;
-}
-
-interface AiAnalysis {
-  breakingItems: { id: string; reason: string; urgency: number }[];
-  suggestedModules: string[];
-  trendingTopics: { topic: string; count: number; sentiment: 'positive' | 'negative' | 'neutral' }[];
-  summary: string;
-}
+const TacticalMap = dynamic(() => import('./TacticalMap'), { ssr: false });
 
 export default function Dashboard() {
-  const [activeModule, setActiveModule] = useState<SidebarModule>('dashboard');
-  const [activeTabs, setActiveTabs] = useState<SidebarModule[]>(['financial', 'radar']);
-  const [seismic, setSeismic] = useState<DataSlice<SeismicEvent[]>>({ data: [], loading: true });
-  const [weather, setWeather] = useState<DataSlice<WeatherData[]>>({ data: [], loading: true });
-  const [news, setNews] = useState<DataSlice<NewsItem[]>>({ data: [], loading: true });
-  const [markets, setMarkets] = useState<DataSlice<MarketTick[]>>({ data: [], loading: true });
-  const [airQuality, setAirQuality] = useState<DataSlice<AirQualityStation[]>>({ data: [], loading: true });
-  const [transport, setTransport] = useState<DataSlice<TransportAlert[]>>({ data: [], loading: true });
-  const [energy, setEnergy] = useState<DataSlice<EnergyData[]>>({ data: [], loading: true });
-  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysis | null>(null);
+  const setSeismic = useStore((s) => s.setSeismic);
+  const setWeather = useStore((s) => s.setWeather);
+  const setMarkets = useStore((s) => s.setMarkets);
+  const setNews = useStore((s) => s.setNews);
+  const setAirQuality = useStore((s) => s.setAirQuality);
+  const setTransport = useStore((s) => s.setTransport);
+  const setEnergy = useStore((s) => s.setEnergy);
+  const setFlights = useStore((s) => s.setFlights);
+  const setCyber = useStore((s) => s.setCyber);
+  const setNaval = useStore((s) => s.setNaval);
+  const setAiSummary = useStore((s) => s.setAiSummary);
+  const setTrendingTopics = useStore((s) => s.setTrendingTopics);
 
   const api = useCallback(async (endpoint: string) => {
     const res = await fetch(`/api/${endpoint}`);
@@ -58,133 +41,144 @@ export default function Dashboard() {
     return res.json();
   }, []);
 
-  // ─── Polling hooks ───
-  usePolling('seismic', POLL_SEISMIC, api, (d) => setSeismic({ data: d.events ?? [], loading: false }),
-    () => setSeismic((s) => ({ ...s, loading: false })));
+  // ─── Data polling ───
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('seismic');
+        if (active) setSeismic(d.events ?? []);
+      } catch { if (active) setSeismic([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_SEISMIC);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setSeismic]);
 
-  usePolling('weather', POLL_WEATHER, api, (d) => setWeather({ data: d.cities ?? [], loading: false }),
-    () => setWeather((s) => ({ ...s, loading: false })));
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('weather');
+        if (active) setWeather(d.cities ?? []);
+      } catch { if (active) setWeather([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_WEATHER);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setWeather]);
 
-  usePolling('news', POLL_NEWS, api, (d) => {
-    setNews({ data: d.items ?? [], loading: false });
-    // Run AI analysis on news
-    runAiAnalysis(d.items ?? []);
-  }, () => setNews((s) => ({ ...s, loading: false })));
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('markets');
+        if (active) setMarkets(d.ticks ?? []);
+      } catch { if (active) setMarkets([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_MARKETS);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setMarkets]);
 
-  usePolling('markets', POLL_MARKETS, api, (d) => setMarkets({ data: d.ticks ?? [], loading: false }),
-    () => setMarkets((s) => ({ ...s, loading: false })));
-
-  usePolling('airquality', POLL_AIR_QUALITY, api, (d) => setAirQuality({ data: d.stations ?? [], loading: false }),
-    () => setAirQuality((s) => ({ ...s, loading: false })));
-
-  usePolling('transport', POLL_TRANSPORT, api, (d) => setTransport({ data: d.alerts ?? [], loading: false }),
-    () => setTransport((s) => ({ ...s, loading: false })));
-
-  usePolling('energy', POLL_ENERGY, api, (d) => setEnergy({ data: d.items ?? [], loading: false }),
-    () => setEnergy((s) => ({ ...s, loading: false })));
-
-  const runAiAnalysis = useCallback(async (items: NewsItem[]) => {
-    if (items.length === 0) return;
-    try {
-      const res = await fetch('/api/ai-analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: items.slice(0, 30) }),
-      });
-      if (res.ok) {
-        const analysis = await res.json();
-        setAiAnalysis(analysis);
-
-        // Apply AI breaking detection to news items
-        if (analysis.breakingItems?.length > 0) {
-          const breakingIds = new Set(analysis.breakingItems.map((b: { id: string }) => b.id));
-          setNews((prev) => ({
-            ...prev,
-            data: prev.data.map((item) =>
-              breakingIds.has(item.id) ? { ...item, isBreaking: true } : item
-            ),
-          }));
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('news');
+        if (active) {
+          setNews(d.items ?? []);
+          // Run AI analysis
+          if ((d.items ?? []).length > 0) {
+            try {
+              const res = await fetch('/api/ai-analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: (d.items ?? []).slice(0, 30) }),
+              });
+              if (res.ok) {
+                const analysis = await res.json();
+                if (active && analysis.summary) setAiSummary(analysis.summary);
+                if (active && analysis.trendingTopics) setTrendingTopics(analysis.trendingTopics);
+              }
+            } catch { /* AI analysis is optional */ }
+          }
         }
-      }
-    } catch {
-      // AI analysis is optional
-    }
-  }, []);
+      } catch { if (active) setNews([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_NEWS);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setNews, setAiSummary, setTrendingTopics]);
 
-  const sources = [seismic, weather, news, markets, airQuality, transport, energy];
-  const activeSources = sources.filter((s) => !s.loading || s.data.length > 0).length;
-  const totalDataPoints = seismic.data.length + weather.data.length + news.data.length
-    + markets.data.length + airQuality.data.length + transport.data.length + energy.data.length;
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('airquality');
+        if (active) setAirQuality(d.stations ?? []);
+      } catch { if (active) setAirQuality([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_AIR_QUALITY);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setAirQuality]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('transport');
+        if (active) setTransport(d.alerts ?? []);
+      } catch { if (active) setTransport([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_TRANSPORT);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setTransport]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const d = await api('energy');
+        if (active) setEnergy(d.items ?? []);
+      } catch { if (active) setEnergy([], false); }
+    };
+    load();
+    const id = setInterval(load, POLL_ENERGY);
+    return () => { active = false; clearInterval(id); };
+  }, [api, setEnergy]);
+
+  // ─── Mock data for flights, cyber, naval ───
+  useEffect(() => {
+    setFlights(generateFlights(18));
+    setCyber(generateCyberThreats(12));
+    setNaval(generateNavalTracks(14));
+
+    const flightTimer = setInterval(() => setFlights(generateFlights(18)), 15_000);
+    const cyberTimer = setInterval(() => setCyber(generateCyberThreats(12)), 30_000);
+    const navalTimer = setInterval(() => setNaval(generateNavalTracks(14)), 20_000);
+
+    return () => {
+      clearInterval(flightTimer);
+      clearInterval(cyberTimer);
+      clearInterval(navalTimer);
+    };
+  }, [setFlights, setCyber, setNaval]);
 
   return (
-    <div className="flex h-screen w-screen flex-col" style={{ background: '#000000' }}>
-      <TopBar
-        activeSources={activeSources}
-        totalSources={7}
-        dataPoints={totalDataPoints}
-        aiSummary={aiAnalysis?.summary}
-      />
+    <div className="flex h-screen w-screen flex-col" style={{ background: '#030303' }}>
+      <TopBar />
 
       <div className="flex flex-1 overflow-hidden">
-        <IconSidebar active={activeModule} onChange={setActiveModule} activeTabs={activeTabs} />
-
-        <LeftPanel
-          markets={markets.data}
-          earthquakes={seismic.data}
-          weather={weather.data}
-          airQuality={airQuality.data}
-          transport={transport.data}
-          energy={energy.data}
-          marketsLoading={markets.loading}
-          seismicLoading={seismic.loading}
-          weatherLoading={weather.loading}
-          activeTabs={activeTabs}
-          onTabChange={setActiveTabs}
-          activeModule={activeModule}
-        />
-
-        <MapSection
-          earthquakes={seismic.data}
-          weather={weather.data}
-          airQuality={airQuality.data}
-        />
-
-        <IntelStream
-          items={news.data}
-          loading={news.loading}
-          aiSummary={aiAnalysis?.summary}
-          trendingTopics={aiAnalysis?.trendingTopics}
-        />
+        <IconSidebar />
+        <LeftPanel />
+        <TacticalMap />
+        <IntelStream />
       </div>
 
       <LiveChat />
     </div>
   );
-}
-
-// ─── Generic polling hook ───
-function usePolling(
-  endpoint: string,
-  interval: number,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fetcher: (ep: string) => Promise<any>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSuccess: (data: any) => void,
-  onError: () => void,
-) {
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const d = await fetcher(endpoint);
-        if (active) onSuccess(d as Record<string, unknown>);
-      } catch {
-        if (active) onError();
-      }
-    };
-    load();
-    const id = setInterval(load, interval);
-    return () => { active = false; clearInterval(id); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endpoint, interval, fetcher]);
 }

@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  /* ─── Background: Deep black institutional ─── */
-  --bg-deepest: #030303;
-  --bg-deep: #050505;
-  --bg-panel: #0a0a0c;
-  --bg-card: #0d0e12;
-  --bg-hover: #111318;
-  --bg-active: #151820;
+  /* ─── Background: Palantir layered depth ─── */
+  --bg-deepest: #040608;
+  --bg-deep: #070a0e;
+  --bg-panel: #0b0f14;
+  --bg-card: #0f1419;
+  --bg-hover: #141a22;
+  --bg-active: #1a222e;
+  --bg-elevated: #1e2736;
 
   /* ─── Intelligence Blue Palette ─── */
   --blue-950: #0a1628;
@@ -19,31 +20,34 @@
   --blue-400: #60a5fa;
   --blue-300: #93bbfd;
 
-  /* ─── Borders: Blue-tinted ─── */
-  --border-dim: rgba(59, 130, 246, 0.06);
-  --border-subtle: rgba(59, 130, 246, 0.10);
-  --border-medium: rgba(59, 130, 246, 0.18);
-  --border-bright: rgba(59, 130, 246, 0.30);
+  /* ─── Borders: Blue-tinted with depth ─── */
+  --border-dim: rgba(59, 130, 246, 0.07);
+  --border-subtle: rgba(59, 130, 246, 0.12);
+  --border-medium: rgba(59, 130, 246, 0.20);
+  --border-bright: rgba(59, 130, 246, 0.35);
 
-  /* ─── Accent: Single blue family ─── */
+  /* ─── Accent ─── */
   --accent: #3b82f6;
   --accent-dim: #60a5fa;
   --accent-bright: #93bbfd;
   --accent-muted: rgba(59, 130, 246, 0.15);
 
-  /* ─── Severity only (data colors, not UI chrome) ─── */
+  /* ─── Severity (data only) ─── */
   --severity-low: #3b82f6;
   --severity-medium: #f59e0b;
   --severity-high: #ef4444;
   --severity-critical: #dc2626;
 
-  /* ─── Text ─── */
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-dim: #64748b;
-  --text-muted: #334155;
+  /* ─── Text with better contrast ─── */
+  --text-primary: #e8edf5;
+  --text-secondary: #9bafc8;
+  --text-dim: #6b7f99;
+  --text-muted: #3d4f65;
 
-  /* ─── Glows ─── */
+  /* ─── Depth shadows ─── */
+  --shadow-panel: 0 1px 3px rgba(0,0,0,0.4), 0 0 20px rgba(0,0,0,0.3);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02);
+  --shadow-elevated: 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(59,130,246,0.03);
   --glow: 0 0 20px rgba(59, 130, 246, 0.10);
   --glow-bright: 0 0 30px rgba(59, 130, 246, 0.15);
 }
@@ -67,26 +71,26 @@ html, body {
 }
 
 body {
-  background: #030303;
+  background: var(--bg-deepest);
   color: var(--text-primary);
   font-family: "Inter", "DM Sans", system-ui, sans-serif;
 }
 
-/* ==================== DOT PATTERN ==================== */
+/* ==================== SUBTLE GRID PATTERN ==================== */
 .bg-dot-pattern {
-  background-image: radial-gradient(rgba(59, 130, 246, 0.07) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* ==================== MAPLIBRE OVERRIDES ==================== */
-.maplibregl-map {
-  font-family: inherit !important;
-}
+.maplibregl-map { font-family: inherit !important; }
 
 .maplibregl-popup-content {
-  background: var(--bg-panel) !important;
+  background: var(--bg-card) !important;
   border: 1px solid var(--border-medium) !important;
-  box-shadow: var(--glow-bright), 0 8px 32px rgba(0,0,0,0.8) !important;
+  box-shadow: var(--shadow-elevated) !important;
   border-radius: 10px !important;
   color: var(--text-primary) !important;
   padding: 10px 14px !important;
@@ -94,108 +98,30 @@ body {
   font-family: "JetBrains Mono", monospace !important;
 }
 
-.maplibregl-popup-tip {
-  border-top-color: var(--bg-panel) !important;
-}
-
-.maplibregl-popup-close-button {
-  color: var(--text-dim) !important;
-  font-size: 16px !important;
-  padding: 4px 8px !important;
-}
-
-.maplibregl-ctrl-attrib {
-  background: rgba(3, 3, 3, 0.9) !important;
-  color: var(--text-muted) !important;
-  font-size: 9px !important;
-}
-
-.maplibregl-ctrl-group {
-  background: var(--bg-panel) !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: 8px !important;
-}
-
-.maplibregl-ctrl-group button {
-  background: var(--bg-panel) !important;
-  border-color: var(--border-dim) !important;
-  color: var(--text-secondary) !important;
-}
-
-.maplibregl-ctrl-group button:hover {
-  background: var(--bg-hover) !important;
-  color: var(--accent) !important;
-}
-
-.maplibregl-ctrl-group button + button {
-  border-top: 1px solid var(--border-dim) !important;
-}
+.maplibregl-popup-tip { border-top-color: var(--bg-card) !important; }
+.maplibregl-popup-close-button { color: var(--text-dim) !important; font-size: 16px !important; padding: 4px 8px !important; }
+.maplibregl-ctrl-attrib { background: rgba(4,6,8,0.95) !important; color: var(--text-muted) !important; font-size: 9px !important; }
+.maplibregl-ctrl-group { background: var(--bg-panel) !important; border: 1px solid var(--border-subtle) !important; border-radius: 8px !important; box-shadow: var(--shadow-panel) !important; }
+.maplibregl-ctrl-group button { background: var(--bg-panel) !important; border-color: var(--border-dim) !important; color: var(--text-secondary) !important; }
+.maplibregl-ctrl-group button:hover { background: var(--bg-hover) !important; color: var(--accent) !important; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--border-dim) !important; }
 
 /* ==================== SCROLLBAR ==================== */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.12);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.22);
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.12); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.22); }
 
 /* ==================== ANIMATIONS ==================== */
-@keyframes pulse-ring {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(2.5); opacity: 0; }
-}
-
-@keyframes glow-breathe {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-@keyframes scan-line {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes data-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
-  50% { box-shadow: 0 0 8px 2px rgba(59, 130, 246, 0.2); }
-}
-
-@keyframes shimmer-load {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes slide-up-fade {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float-up {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes wave-flow {
-  0% { d: path("M0 6 Q5 0 10 6 T20 6 T30 6 T40 6"); }
-  50% { d: path("M0 6 Q5 12 10 6 T20 6 T30 6 T40 6"); }
-  100% { d: path("M0 6 Q5 0 10 6 T20 6 T30 6 T40 6"); }
-}
-
-@keyframes breaking-flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
+@keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+@keyframes glow-breathe { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes scan-line { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+@keyframes data-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--accent); } 50% { box-shadow: 0 0 8px 2px rgba(59, 130, 246, 0.2); } }
+@keyframes shimmer-load { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes slide-up-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes float-up { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes wave-flow { 0% { d: path("M0 6 Q5 0 10 6 T20 6 T30 6 T40 6"); } 50% { d: path("M0 6 Q5 12 10 6 T20 6 T30 6 T40 6"); } 100% { d: path("M0 6 Q5 0 10 6 T20 6 T30 6 T40 6"); } }
+@keyframes breaking-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 .animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
 .animate-glow-breathe { animation: glow-breathe 3s ease-in-out infinite; }
@@ -213,15 +139,13 @@ body {
 .panel-glass {
   background: var(--bg-panel);
   border: 1px solid var(--border-dim);
-  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-panel);
 }
 
-.text-glow {
-  text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
-}
+.text-glow { text-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
 
 .border-glow {
-  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.04), 0 0 20px rgba(59, 130, 246, 0.06);
+  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.04), var(--shadow-panel);
 }
 
 /* ─── Sidebar items ─── */
@@ -230,8 +154,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   color: var(--text-dim);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -245,8 +169,8 @@ body {
 
 .icon-sidebar-item.active {
   color: var(--blue-400);
-  background: rgba(59, 130, 246, 0.08);
-  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.06);
+  background: rgba(59, 130, 246, 0.10);
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.08);
 }
 
 .icon-sidebar-item.active::before {
@@ -261,20 +185,22 @@ body {
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
-/* ─── Module card ─── */
+/* ─── Module card with Palantir depth ─── */
 .module-card {
   background: var(--bg-card);
   border: 1px solid var(--border-dim);
   border-radius: 10px;
   overflow: hidden;
-  transition: border-color 0.25s ease;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .module-card:hover {
   border-color: var(--border-subtle);
+  box-shadow: var(--shadow-card), 0 0 12px rgba(59,130,246,0.04);
 }
 
-/* ─── Badge — single blue style ─── */
+/* ─── Badge ─── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -295,7 +221,7 @@ body {
 .badge-severity-high { background: rgba(239, 68, 68, 0.08); color: #ef4444; border-color: rgba(239, 68, 68, 0.18); }
 .badge-severity-critical { background: rgba(220, 38, 38, 0.10); color: #dc2626; border-color: rgba(220, 38, 38, 0.20); }
 
-/* ─── Layer control toggle ─── */
+/* ─── Layer toggle ─── */
 .layer-btn {
   padding: 5px 12px;
   border-radius: 6px;
@@ -310,32 +236,18 @@ body {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.layer-btn:hover {
-  border-color: var(--border-subtle);
-  color: var(--text-secondary);
-}
+.layer-btn:hover { border-color: var(--border-subtle); color: var(--text-secondary); }
 
 .layer-btn.active {
   border-color: var(--blue-500);
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(59, 130, 246, 0.10);
   color: var(--blue-400);
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.12);
 }
 
-/* ─── DnD drag overlay ─── */
-.dnd-drag-overlay {
-  opacity: 0.85;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.1);
-  border-radius: 10px;
-  cursor: grabbing;
-}
-
-.dnd-placeholder {
-  border: 2px dashed rgba(59, 130, 246, 0.25);
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.03);
-  min-height: 80px;
-}
+/* ─── DnD ─── */
+.dnd-drag-overlay { opacity: 0.85; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.1); border-radius: 10px; cursor: grabbing; }
+.dnd-placeholder { border: 2px dashed rgba(59, 130, 246, 0.25); border-radius: 10px; background: rgba(59, 130, 246, 0.03); min-height: 80px; }
 
 /* ─── Chat ─── */
 .chat-msg { animation: float-up 0.3s ease-out; }
@@ -344,31 +256,38 @@ body {
 .breaking-indicator { animation: breaking-flash 1.5s ease-in-out infinite; }
 
 /* ─── Init dots ─── */
-.init-dots::after {
-  content: '';
-  animation: init-dots 1.5s steps(3, end) infinite;
-}
+.init-dots::after { content: ''; animation: init-dots 1.5s steps(3, end) infinite; }
+@keyframes init-dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
 
-@keyframes init-dots {
-  0% { content: ''; }
-  33% { content: '.'; }
-  66% { content: '..'; }
-  100% { content: '...'; }
-}
+/* ─── Tactical marker ─── */
+.tactical-marker { width: 16px; height: 16px; border-radius: 50%; background: var(--blue-500); border: 2px solid var(--blue-300); box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.2); animation: data-pulse 2s ease-in-out infinite; }
+.tactical-marker-critical { background: #dc2626; border-color: #fca5a5; box-shadow: 0 0 12px rgba(220, 38, 38, 0.5), 0 0 30px rgba(220, 38, 38, 0.2); }
 
-/* ─── Tactical marker on map ─── */
-.tactical-marker {
-  width: 16px;
-  height: 16px;
+/* ─── Heatmap sentiment markers ─── */
+.heatmap-pulse {
   border-radius: 50%;
-  background: var(--blue-500);
-  border: 2px solid var(--blue-300);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.2);
-  animation: data-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  animation: heatmap-expand 3s ease-out infinite;
 }
 
-.tactical-marker-critical {
-  background: #dc2626;
-  border-color: #fca5a5;
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5), 0 0 30px rgba(220, 38, 38, 0.2);
+@keyframes heatmap-expand {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 0.3; }
+  100% { transform: scale(0.8); opacity: 0.6; }
+}
+
+/* ─── Source tag ─── */
+.source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(59,130,246,0.06);
+  color: var(--blue-400);
+  border: 1px solid rgba(59,130,246,0.10);
 }

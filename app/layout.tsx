@@ -3,28 +3,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Italy Pulse — Piattaforma Analitica OSINT",
-  description:
-    "Dashboard OSINT in tempo reale per l'Italia. Dati sismici, meteo, mercati, intelligence, qualità dell'aria su mappa interattiva.",
+  description: "Dashboard OSINT C4ISR in tempo reale per l'Italia.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="it" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased overflow-hidden h-screen w-screen">
         {children}

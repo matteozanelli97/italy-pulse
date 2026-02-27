@@ -1,48 +1,28 @@
 // ============================================================
-// ITALY PULSE — Zustand Global State Store (Refactored)
-// All polling logic lives here — Dashboard is a pure renderer.
+// ITALY PULSE — Zustand Global State Store
 // ============================================================
 
 import { create } from 'zustand';
 import type {
-  FlyToTarget,
-  SeismicEvent,
-  WeatherData,
-  MarketTick,
-  NewsItem,
-  AirQualityStation,
-  TransportAlert,
-  EnergyData,
-  FlightTrack,
-  CyberThreat,
-  NavalTrack,
-  ModuleId,
-  SentimentHotspot,
+  FlyToTarget, SeismicEvent, WeatherData, MarketTick, NewsItem,
+  AirQualityStation, TransportAlert, EnergyData, FlightTrack,
+  CyberThreat, NavalTrack, SatelliteTrack, LiveCam,
+  ShaderMode, ShaderSettings,
 } from '@/types';
 import {
-  POLL_SEISMIC,
-  POLL_WEATHER,
-  POLL_MARKETS,
-  POLL_NEWS,
-  POLL_AIR_QUALITY,
-  POLL_TRANSPORT,
-  POLL_ENERGY,
+  POLL_SEISMIC, POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
+  POLL_AIR_QUALITY, POLL_TRANSPORT, POLL_ENERGY, POLL_SATELLITES,
 } from '@/lib/constants';
 import { generateCyberThreats, generateNavalTracks } from '@/lib/mock-data';
 
-// ─── Generic source state ───
 interface SourceSlice<T> {
-  data: T[];
-  loading: boolean;
-  lastUpdate: string | null;
-  error: boolean;
+  data: T[]; loading: boolean; lastUpdate: string | null; error: boolean;
 }
 
 function emptySlice<T>(): SourceSlice<T> {
   return { data: [], loading: true, lastUpdate: null, error: false };
 }
 
-// ─── Store shape ───
 export interface AppStore {
   // Map
   flyToTarget: FlyToTarget | null;
@@ -63,33 +43,23 @@ export interface AppStore {
   flights: SourceSlice<FlightTrack>;
   cyber: SourceSlice<CyberThreat>;
   naval: SourceSlice<NavalTrack>;
-  aiSummary: string;
-  trendingTopics: { topic: string; count: number; sentiment: 'positive' | 'negative' | 'neutral' }[];
-  sentimentHotspots: SentimentHotspot[];
+  satellites: SourceSlice<SatelliteTrack>;
+  livecams: SourceSlice<LiveCam>;
 
   // UI
-  activeModules: ModuleId[];
   searchQuery: string;
-  sidebarCollapsed: boolean;
-  isMobile: boolean;
   chatOpen: boolean;
-  mapLayers: { heatmap: boolean; flights: boolean; naval: boolean; cyber: boolean };
+  marketRegion: 'IT' | 'US';
+  mapLayers: { flights: boolean; naval: boolean; cyber: boolean; satellites: boolean; seismic: boolean; traffic: boolean };
+  shaderSettings: ShaderSettings;
 
-  // Data setters
-  setAiSummary: (s: string) => void;
-  setTrendingTopics: (t: AppStore['trendingTopics']) => void;
-  setSentimentHotspots: (h: SentimentHotspot[]) => void;
-
-  // UI actions
-  setActiveModules: (modules: ModuleId[]) => void;
-  swapModule: (index: number, newModule: ModuleId) => void;
-  addModule: (moduleId: ModuleId) => void;
-  removeModule: (moduleId: ModuleId) => void;
+  // Actions
   setSearchQuery: (q: string) => void;
-  setSidebarCollapsed: (c: boolean) => void;
-  setIsMobile: (m: boolean) => void;
   setChatOpen: (open: boolean) => void;
+  setMarketRegion: (r: 'IT' | 'US') => void;
   toggleMapLayer: (layer: keyof AppStore['mapLayers']) => void;
+  setShaderMode: (mode: ShaderMode) => void;
+  setShaderSetting: (key: keyof Omit<ShaderSettings, 'mode'>, value: number) => void;
 
   // Polling engine
   _timers: ReturnType<typeof setInterval>[];
@@ -104,7 +74,6 @@ async function apiFetch(endpoint: string) {
 }
 
 export const useStore = create<AppStore>((set, get) => ({
-  // ─── Map ───
   flyToTarget: null,
   selectedMarkerId: null,
   selectedMarkerType: null,
@@ -112,7 +81,6 @@ export const useStore = create<AppStore>((set, get) => ({
   selectMarker: (id, type = null) => set({ selectedMarkerId: id, selectedMarkerType: type }),
   clearFlyTo: () => set({ flyToTarget: null }),
 
-  // ─── Data ───
   seismic: emptySlice(),
   weather: emptySlice(),
   markets: emptySlice(),
@@ -123,54 +91,25 @@ export const useStore = create<AppStore>((set, get) => ({
   flights: emptySlice(),
   cyber: emptySlice(),
   naval: emptySlice(),
-  aiSummary: '',
-  trendingTopics: [],
-  sentimentHotspots: [],
+  satellites: emptySlice(),
+  livecams: { data: [], loading: false, lastUpdate: null, error: false },
 
-  // ─── UI ───
-  activeModules: ['seismic', 'financial', 'weather'],
   searchQuery: '',
-  sidebarCollapsed: false,
-  isMobile: false,
   chatOpen: false,
-  mapLayers: { heatmap: true, flights: true, naval: true, cyber: true },
+  marketRegion: 'IT',
+  mapLayers: { flights: true, naval: true, cyber: true, satellites: false, seismic: true, traffic: false },
+  shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  // ─── Actions ───
-  setAiSummary: (s) => set({ aiSummary: s }),
-  setTrendingTopics: (t) => set({ trendingTopics: t }),
-  setSentimentHotspots: (h) => set({ sentimentHotspots: h }),
-  setActiveModules: (modules) => set({ activeModules: modules }),
-  swapModule: (index, newModule) =>
-    set((state) => {
-      const next = [...state.activeModules];
-      if (index < next.length) next[index] = newModule;
-      return { activeModules: next };
-    }),
-  addModule: (moduleId) =>
-    set((state) => {
-      if (state.activeModules.includes(moduleId)) return state;
-      if (state.activeModules.length >= 3) {
-        const next = [...state.activeModules];
-        next[next.length - 1] = moduleId;
-        return { activeModules: next };
-      }
-      return { activeModules: [...state.activeModules, moduleId] };
-    }),
-  removeModule: (moduleId) =>
-    set((state) => {
-      if (state.activeModules.length <= 1) return state;
-      return { activeModules: state.activeModules.filter((m) => m !== moduleId) };
-    }),
   setSearchQuery: (q) => set({ searchQuery: q }),
-  setSidebarCollapsed: (c) => set({ sidebarCollapsed: c }),
-  setIsMobile: (m) => set({ isMobile: m }),
   setChatOpen: (open) => set({ chatOpen: open }),
+  setMarketRegion: (r) => set({ marketRegion: r }),
   toggleMapLayer: (layer) =>
-    set((state) => ({
-      mapLayers: { ...state.mapLayers, [layer]: !state.mapLayers[layer] },
-    })),
+    set((s) => ({ mapLayers: { ...s.mapLayers, [layer]: !s.mapLayers[layer] } })),
+  setShaderMode: (mode) =>
+    set((s) => ({ shaderSettings: { ...s.shaderSettings, mode } })),
+  setShaderSetting: (key, value) =>
+    set((s) => ({ shaderSettings: { ...s.shaderSettings, [key]: value } })),
 
-  // ─── Polling ───
   _timers: [],
   startPolling: () => {
     const store = get();
@@ -182,27 +121,9 @@ export const useStore = create<AppStore>((set, get) => ({
       try {
         const d = await apiFetch(endpoint);
         const items = (d[dataKey] ?? []) as unknown[];
-        const now = new Date().toISOString();
-        set({ [key]: { data: items, loading: false, lastUpdate: now, error: false } } as Partial<AppStore>);
-
-        if (key === 'news' && items.length > 0) {
-          try {
-            const res = await fetch('/api/ai-analyze', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ items: (items as NewsItem[]).slice(0, 30) }),
-            });
-            if (res.ok) {
-              const a = await res.json();
-              if (a.summary) set({ aiSummary: a.summary });
-              if (a.trendingTopics) set({ trendingTopics: a.trendingTopics });
-            }
-          } catch { /* optional */ }
-        }
+        set({ [key]: { data: items, loading: false, lastUpdate: new Date().toISOString(), error: false } } as Partial<AppStore>);
       } catch {
-        set((s) => ({
-          [key]: { ...s[key], loading: false, error: true },
-        } as Partial<AppStore>));
+        set((s) => ({ [key]: { ...s[key], loading: false, error: true } } as Partial<AppStore>));
       }
     };
 
@@ -221,19 +142,30 @@ export const useStore = create<AppStore>((set, get) => ({
       schedule('energy', 'energy', POLL_ENERGY, 'items'),
     ];
 
-    // Real flights via OpenSky API
+    // Real flights via OpenSky
     const now = () => new Date().toISOString();
     const pollFlights = async () => {
       try {
         const d = await apiFetch('flights');
-        const flights = (d.flights ?? []) as FlightTrack[];
-        set({ flights: { data: flights, loading: false, lastUpdate: now(), error: !!d.error } });
+        set({ flights: { data: (d.flights ?? []) as FlightTrack[], loading: false, lastUpdate: now(), error: !!d.error } });
       } catch {
         set((s) => ({ flights: { ...s.flights, loading: false, error: true } }));
       }
     };
     pollFlights();
     timers.push(setInterval(pollFlights, 15_000));
+
+    // Satellites
+    const pollSatellites = async () => {
+      try {
+        const d = await apiFetch('satellites');
+        set({ satellites: { data: (d.satellites ?? []) as SatelliteTrack[], loading: false, lastUpdate: now(), error: false } });
+      } catch {
+        set((s) => ({ satellites: { ...s.satellites, loading: false, error: true } }));
+      }
+    };
+    pollSatellites();
+    timers.push(setInterval(pollSatellites, POLL_SATELLITES));
 
     // Mock sources (cyber, naval)
     const genCyber = () => set({ cyber: { data: generateCyberThreats(12), loading: false, lastUpdate: now(), error: false } });
@@ -242,24 +174,15 @@ export const useStore = create<AppStore>((set, get) => ({
     timers.push(setInterval(genCyber, 30_000));
     timers.push(setInterval(genNaval, 20_000));
 
-    // Sentiment hotspots
-    const genSentiment = () => {
-      const hotspots: SentimentHotspot[] = [
-        { id: 'hs-roma', lat: 41.9028, lng: 12.4964, city: 'Roma', intensity: 0.3 + Math.random() * 0.5, sentiment: Math.random() > 0.5 ? 'negative' : 'neutral', topic: 'Politica', count: Math.floor(50 + Math.random() * 200) },
-        { id: 'hs-milano', lat: 45.4642, lng: 9.19, city: 'Milano', intensity: 0.2 + Math.random() * 0.4, sentiment: Math.random() > 0.7 ? 'negative' : 'positive', topic: 'Economia', count: Math.floor(30 + Math.random() * 150) },
-        { id: 'hs-napoli', lat: 40.8518, lng: 14.2681, city: 'Napoli', intensity: 0.4 + Math.random() * 0.5, sentiment: 'negative', topic: 'Sicurezza', count: Math.floor(40 + Math.random() * 100) },
-        { id: 'hs-torino', lat: 45.0703, lng: 7.6869, city: 'Torino', intensity: 0.1 + Math.random() * 0.3, sentiment: 'neutral', topic: 'Lavoro', count: Math.floor(20 + Math.random() * 80) },
-        { id: 'hs-palermo', lat: 38.1157, lng: 13.3615, city: 'Palermo', intensity: 0.3 + Math.random() * 0.4, sentiment: Math.random() > 0.6 ? 'negative' : 'neutral', topic: 'Cronaca', count: Math.floor(15 + Math.random() * 60) },
-        { id: 'hs-firenze', lat: 43.7696, lng: 11.2558, city: 'Firenze', intensity: 0.1 + Math.random() * 0.2, sentiment: 'positive', topic: 'Cultura', count: Math.floor(10 + Math.random() * 40) },
-        { id: 'hs-bologna', lat: 44.4949, lng: 11.3426, city: 'Bologna', intensity: 0.2 + Math.random() * 0.3, sentiment: 'neutral', topic: 'Università', count: Math.floor(15 + Math.random() * 50) },
-        { id: 'hs-catania', lat: 37.5079, lng: 15.09, city: 'Catania', intensity: 0.2 + Math.random() * 0.5, sentiment: Math.random() > 0.5 ? 'negative' : 'neutral', topic: 'Ambiente', count: Math.floor(10 + Math.random() * 40) },
-        { id: 'hs-genova', lat: 44.4056, lng: 8.9463, city: 'Genova', intensity: 0.15 + Math.random() * 0.3, sentiment: 'neutral', topic: 'Trasporti', count: Math.floor(10 + Math.random() * 30) },
-        { id: 'hs-bari', lat: 41.1171, lng: 16.8719, city: 'Bari', intensity: 0.2 + Math.random() * 0.3, sentiment: Math.random() > 0.6 ? 'negative' : 'positive', topic: 'Immigrazione', count: Math.floor(20 + Math.random() * 60) },
-      ];
-      set({ sentimentHotspots: hotspots });
-    };
-    genSentiment();
-    timers.push(setInterval(genSentiment, 60_000));
+    // Live cams (static data, loaded once)
+    (async () => {
+      try {
+        const d = await apiFetch('livecams');
+        set({ livecams: { data: (d.cams ?? []) as LiveCam[], loading: false, lastUpdate: now(), error: false } });
+      } catch {
+        set({ livecams: { data: [], loading: false, lastUpdate: now(), error: true } });
+      }
+    })();
 
     set({ _timers: timers });
   },

@@ -64,7 +64,7 @@ export function generateFlights(count = 18): FlightTrack[] {
 }
 
 // ─── Cyber threats ───
-const THREAT_TYPES: CyberThreat['type'][] = ['ddos', 'malware', 'phishing', 'intrusion', 'ransomware', 'data_breach'];
+const THREAT_TYPES: CyberThreat['type'][] = ['ddos', 'malware', 'phishing', 'intrusion', 'ransomware', 'data_breach', 'outage'];
 const SOURCE_COUNTRIES = ['CN', 'RU', 'KP', 'IR', 'BR', 'US', 'UA', 'RO', 'NG', 'PK'];
 const SECTORS = ['Governo', 'Banche', 'Telecomunicazioni', 'Energia', 'Difesa', 'Sanità', 'Trasporti', 'Industria', 'Media'];
 const THREAT_DESCS: Record<CyberThreat['type'], string[]> = {
@@ -74,6 +74,7 @@ const THREAT_DESCS: Record<CyberThreat['type'], string[]> = {
   intrusion: ['Accesso non autorizzato a DB', 'Lateral movement rilevato', 'Privilege escalation su server'],
   ransomware: ['LockBit 4.0 variant rilevato', 'Ransomware targeting ASL', 'Cifratura file su rete comunale'],
   data_breach: ['Esfiltrazione dati sensibili', 'Dump DB su darknet', 'Leak credenziali aziendali'],
+  outage: ['Servizio cloud non raggiungibile', 'CDN down in area EU', 'Piattaforma social irraggiungibile'],
 };
 
 let cyberSeed = 0;

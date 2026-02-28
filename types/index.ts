@@ -104,6 +104,14 @@ export interface LiveCam {
   active?: boolean;
 }
 
+export interface ServiceStatus {
+  id: string; name: string;
+  category: 'telecom' | 'banking' | 'social' | 'cloud' | 'transport' | 'media' | 'gov';
+  icon: string;
+  status: 'operational' | 'degraded' | 'down';
+  latency: number; httpStatus: number;
+}
+
 export interface ChatMessage {
   id: string; nickname: string; avatar: string;
   message: string; timestamp: string; location: string;

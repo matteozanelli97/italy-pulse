@@ -49,14 +49,12 @@ export const SEVERITY_COLORS = {
   low: '#2D72D2', medium: '#EC9A3C', high: '#E76A6E', critical: '#CD4246',
 } as const;
 
-// News category colors
+// News category colors — only 4 categories
 export const CATEGORY_COLORS: Record<string, string> = {
   Politics: '#8b5cf6',
-  Defense: '#E76A6E',
   Economy: '#EC9A3C',
   World: '#2D72D2',
   Cronaca: '#ec4899',
-  Entertainment: '#32A467',
 };
 
 // Left panel modules
@@ -64,7 +62,7 @@ export const MODULES: ModuleConfig[] = [
   { id: 'markets', label: 'Mercati', description: 'Mercati IT/US + Energia', icon: 'markets' },
   { id: 'weatherAqi', label: 'Meteo & AQI', description: 'Meteo + Qualità Aria', icon: 'weather' },
   { id: 'mobility', label: 'Viabilità', description: 'Traffico e trasporti live', icon: 'mobility' },
-  { id: 'cyber', label: 'Cyber Intel', description: 'Attacchi e outage', icon: 'cyber' },
+  { id: 'cyber', label: 'Stato Servizi', description: 'Servizi Italia in tempo reale', icon: 'cyber' },
   { id: 'livecams', label: 'Live Cams', description: 'Webcam e dirette', icon: 'livecams' },
 ];
 

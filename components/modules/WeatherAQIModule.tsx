@@ -126,9 +126,9 @@ function CityRow({ w, aqi, expanded, setExpanded, flyTo, pinned, togglePin }: {
         <button onClick={() => { flyTo({ lat: w.latitude, lng: w.longitude, zoom: 9, pitch: 50 }); setExpanded(isExpanded ? null : w.city); }}
           className="flex flex-1 items-center justify-between py-1 text-left hover:bg-[var(--bg-hover)] rounded px-1 transition-colors min-w-0">
           <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>{w.city}</span>
-          <div className="flex items-center gap-1.5 ml-1">
+          <div className="flex items-center gap-1.5 ml-1 min-w-0">
             <span className="text-[12px] font-bold font-mono flex-shrink-0" style={{ color: tempColor }}>{Math.round(w.temperature)}°C</span>
-            <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--text-dim)' }}>{w.weatherDescription}</span>
+            <span className="text-[10px] truncate min-w-0" style={{ color: 'var(--text-dim)' }}>{w.weatherDescription}</span>
             {aqi && (
               <span className="text-[10px] font-bold font-mono rounded px-1 flex-shrink-0" style={{ color: LEVEL_COLORS[aqi.level], background: `${LEVEL_COLORS[aqi.level]}10` }}>
                 {aqi.aqi}

@@ -27,22 +27,19 @@ const FEEDS = [
 
 const BREAKING_KEYWORDS = /(?:ultim.ora|breaking|urgente|allerta|terremoto.*forte|tsunami|attentato|esplosione|emergenza|strage|morti|evacuazion)/i;
 
-// Category classification matching the required exact categories
+// Category classification — only 4 categories: Politics, Economy, World, Cronaca
 function classifyCategory(title: string, description: string, feedCategory: string): string {
   const t = (title + ' ' + description + ' ' + feedCategory).toLowerCase();
   if (/politic|governo|parlamento|ministro|elezioni|decreto|senato|camera|premier|presidente.*repubblica/i.test(t)) return 'Politics';
-  if (/difesa|militar|esercito|aeronautica|marina.*militare|nato|guerra|missil|arma|f-?35|carrier|forze.*armate/i.test(t)) return 'Defense';
   if (/econom|finanz|borsa|mercati|pil|inflaz|banca|spread|euro|lavoro|occupaz|debito|tass[ae]/i.test(t)) return 'Economy';
-  if (/mond|internazional|usa|cina|russia|europa|trump|onu|medio.?orient|africa|asia|foreign|estero|kiev|ucraina/i.test(t)) return 'World';
+  if (/mond|internazional|usa|cina|russia|europa|trump|onu|medio.?orient|africa|asia|foreign|estero|kiev|ucraina|difesa|militar|nato|guerra/i.test(t)) return 'World';
   if (/cronaca|incidente|morto|omicidio|arresto|indagine|rapina|droga|mafia|camorra|ndrangheta|femminicidio/i.test(t)) return 'Cronaca';
-  if (/spettacol|cinema|musica|festival|serie.*tv|calcio|sport|olimp|entertai|cultura|arte|teatro|concert|sanremo/i.test(t)) return 'Entertainment';
   // Default based on feed URL hints
   if (/politica/.test(feedCategory)) return 'Politics';
   if (/economia|finanz/.test(feedCategory)) return 'Economy';
-  if (/mondo|esteri/.test(feedCategory)) return 'World';
+  if (/mondo|esteri|difesa/.test(feedCategory)) return 'World';
   if (/cronaca/.test(feedCategory)) return 'Cronaca';
-  if (/spettacol|cultura/.test(feedCategory)) return 'Entertainment';
-  return 'World'; // default
+  return 'Cronaca'; // default — general Italian news
 }
 
 export async function GET() {

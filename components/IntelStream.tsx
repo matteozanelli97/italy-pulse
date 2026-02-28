@@ -1,44 +1,70 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
-import { CATEGORY_COLORS, SOURCE_FAVICONS } from '@/lib/constants';
+import { CATEGORY_COLORS } from '@/lib/constants';
 import { sounds } from '@/lib/sounds';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tutti' },
   { id: 'Politics', label: 'Politica' },
-  { id: 'Defense', label: 'Difesa' },
   { id: 'Economy', label: 'Economia' },
   { id: 'World', label: 'Mondo' },
   { id: 'Cronaca', label: 'Cronaca' },
-  { id: 'Entertainment', label: 'Intrattenimento' },
 ] as const;
-
-const SOURCE_COLORS: Record<string, string> = {
-  ANSA: '#2D72D2', Repubblica: '#dc2626', Corriere: '#1e40af',
-  Sole24Ore: '#d97706', Adnkronos: '#059669', SkyTG24: '#0ea5e9',
-  AGI: '#7c3aed', TGCOM24: '#e11d48',
-};
 
 export default function IntelStream() {
   const { data: items, loading } = useStore((s) => s.news);
-  const openArticle = useStore((s) => s.openArticle);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
+  const [summaryData, setSummaryData] = useState<{ text: string; cat: string } | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const filtered = useMemo(() => {
     let result = items;
     if (activeTab !== 'all') result = result.filter((i) => i.category === activeTab);
     if (search) {
       const s = search.toLowerCase();
-      result = result.filter((i) => i.title.toLowerCase().includes(s) || i.description.toLowerCase().includes(s) || i.source.toLowerCase().includes(s));
+      result = result.filter((i) => i.title.toLowerCase().includes(s) || i.description.toLowerCase().includes(s));
     }
     return result;
   }, [items, activeTab, search]);
 
   const breakingCount = items.filter((i) => i.isBreaking).length;
+
+  const pinned = useMemo(() => filtered.filter((i) => pinnedIds.has(i.id)), [filtered, pinnedIds]);
+  const unpinned = useMemo(() => filtered.filter((i) => !pinnedIds.has(i.id)), [filtered, pinnedIds]);
+
+  const togglePin = useCallback((id: string) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const fetchSummary = useCallback(async (catId: string) => {
+    if (summaryLoading) return;
+    setSummaryLoading(true);
+    setSummaryData(null);
+    try {
+      const catItems = catId === 'all' ? items : items.filter((i) => i.category === catId);
+      const titles = catItems.slice(0, 20).map((i) => i.title);
+      const res = await fetch('/api/news/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titles, category: catId }),
+      });
+      const data = await res.json();
+      setSummaryData({ text: data.summary, cat: catId });
+    } catch {
+      setSummaryData({ text: 'Errore nel generare il riepilogo.', cat: catId });
+    }
+    setSummaryLoading(false);
+  }, [items, summaryLoading]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden" style={{ background: 'var(--bg-deep)' }}>
@@ -57,7 +83,7 @@ export default function IntelStream() {
           {breakingCount > 0 && (
             <span className="breaking-indicator rounded-full px-2.5 py-0.5 text-[10px] font-bold font-mono"
               style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.2)' }}>
-              {breakingCount} URGENTI
+              {breakingCount} BREAKING
             </span>
           )}
           <span className="rounded-full px-2 py-0.5 text-[10px] font-bold font-mono"
@@ -73,19 +99,19 @@ export default function IntelStream() {
             <circle cx="7" cy="7" r="4" stroke="var(--text-muted)" strokeWidth="1.3" />
             <line x1="10" y1="10" x2="13" y2="13" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round" />
           </svg>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtra intelligence..."
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtra notizie..."
             className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-[var(--text-muted)]" style={{ color: 'var(--text-secondary)' }} />
           {search && <button onClick={() => setSearch('')} className="text-[13px] hover:text-white transition-colors" style={{ color: 'var(--text-dim)' }}>×</button>}
         </div>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto border-b px-3 py-2 flex-shrink-0" style={{ borderColor: 'var(--border-dim)' }}>
+      {/* Category Tabs — only categories are colored */}
+      <div className="flex items-center gap-1 overflow-x-auto border-b px-3 py-2 flex-shrink-0" style={{ borderColor: 'var(--border-dim)' }}>
         {CATEGORIES.map((cat) => {
           const catColor = CATEGORY_COLORS[cat.id] || 'var(--cyan-500)';
           const isActive = activeTab === cat.id;
           return (
-            <button key={cat.id} onClick={() => { setActiveTab(cat.id); sounds.click(); }}
+            <button key={cat.id} onClick={() => { setActiveTab(cat.id); setSummaryData(null); sounds.click(); }}
               className="flex-shrink-0 rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-all"
               style={{
                 background: isActive ? (cat.id === 'all' ? 'var(--accent-muted)' : `${catColor}15`) : 'transparent',
@@ -96,7 +122,32 @@ export default function IntelStream() {
             </button>
           );
         })}
+        <div className="flex-1" />
+        {/* AI Summary button */}
+        <button
+          onClick={() => fetchSummary(activeTab)}
+          disabled={summaryLoading}
+          className="flex-shrink-0 rounded-md px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-all"
+          style={{
+            background: 'var(--accent-muted)', color: 'var(--accent)',
+            border: '1px solid var(--border-medium)', opacity: summaryLoading ? 0.5 : 1,
+          }}>
+          {summaryLoading ? '...' : 'AI Riepilogo'}
+        </button>
       </div>
+
+      {/* AI Summary panel */}
+      {summaryData && (
+        <div className="border-b px-4 py-3 flex-shrink-0" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-card)' }}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-bold font-mono uppercase" style={{ color: 'var(--accent)' }}>Riepilogo AI</span>
+            <button onClick={() => setSummaryData(null)} className="text-[12px] hover:text-white" style={{ color: 'var(--text-dim)' }}>×</button>
+          </div>
+          <p className="text-[11px] leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-secondary)' }}>
+            {summaryData.text}
+          </p>
+        </div>
+      )}
 
       {/* Feed */}
       <div className="flex-1 overflow-y-auto">
@@ -117,60 +168,26 @@ export default function IntelStream() {
         ) : (
           <AnimatePresence mode="popLayout">
             <div>
-              {filtered.slice(0, 50).map((item, i) => {
-                const catColor = CATEGORY_COLORS[item.category] || 'var(--cyan-500)';
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.008 }}
-                    className="group block px-4 py-3 transition-colors hover:bg-[var(--bg-hover)] border-b cursor-default"
-                    style={{ borderColor: 'var(--border-dim)' }}
-                  >
-                    {/* Source + category + time row */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <SourceTag source={item.source} />
-                      {activeTab === 'all' && (
-                        <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono"
-                          style={{ color: catColor, background: `${catColor}10`, border: `1px solid ${catColor}20` }}>
-                          {item.category}
-                        </span>
-                      )}
-                      <span className="flex-1" />
-                      <span className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--text-muted)' }}>
-                        {formatTime(item.publishedAt)}
-                      </span>
-                    </div>
-                    {/* Title */}
-                    <p className="line-clamp-2 text-[13px] leading-relaxed font-medium group-hover:text-white transition-colors"
-                      style={{ color: item.isBreaking ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                      {item.isBreaking && <span className="inline-block mr-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded breaking-indicator font-mono" style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626' }}>URGENTE</span>}
-                      {item.title}
-                    </p>
-                    {item.description && (
-                      <p className="mt-1 line-clamp-1 text-[11px]" style={{ color: 'var(--text-dim)' }}>
-                        {item.description}
-                      </p>
-                    )}
-                    {/* Read full article button */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openArticle(item.url, item.title); sounds.click(); }}
-                        className="text-[10px] font-semibold uppercase tracking-wider transition-colors hover:text-white px-2 py-0.5 rounded"
-                        style={{ color: 'var(--accent)', background: 'var(--accent-muted)', border: '1px solid var(--border-medium)' }}>
-                        Leggi Articolo
-                      </button>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer"
-                        className="text-[10px] transition-colors hover:text-white"
-                        style={{ color: 'var(--text-muted)' }}
-                        onClick={(e) => e.stopPropagation()}>
-                        Apri ↗
-                      </a>
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {/* Pinned items */}
+              {pinned.length > 0 && (
+                <>
+                  <div className="px-4 py-1.5 font-mono text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}>Fissate</div>
+                  {pinned.map((item) => (
+                    <NewsItem key={`pin-${item.id}`} item={item} expanded={expandedId === item.id}
+                      onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                      pinned onTogglePin={() => togglePin(item.id)} activeTab={activeTab} />
+                  ))}
+                  <div className="border-b" style={{ borderColor: 'var(--border-dim)' }} />
+                </>
+              )}
+              {/* Regular items */}
+              {unpinned.slice(0, 50).map((item, i) => (
+                <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.008 }}>
+                  <NewsItem item={item} expanded={expandedId === item.id}
+                    onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    pinned={pinnedIds.has(item.id)} onTogglePin={() => togglePin(item.id)} activeTab={activeTab} />
+                </motion.div>
+              ))}
             </div>
           </AnimatePresence>
         )}
@@ -179,20 +196,66 @@ export default function IntelStream() {
   );
 }
 
-function SourceTag({ source }: { source: string }) {
-  const color = SOURCE_COLORS[source] || 'var(--cyan-500)';
-  const favicon = SOURCE_FAVICONS[source];
+function NewsItem({ item, expanded, onToggle, pinned, onTogglePin, activeTab }: {
+  item: { id: string; title: string; description: string; source: string; url: string; publishedAt: string; category: string; isBreaking?: boolean };
+  expanded: boolean; onToggle: () => void; pinned: boolean; onTogglePin: () => void; activeTab: string;
+}) {
+  const catColor = CATEGORY_COLORS[item.category] || 'var(--cyan-500)';
+
   return (
-    <span className="source-tag" style={{ color, borderColor: `${color}25`, background: `${color}08` }}>
-      {favicon ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={favicon} alt="" className="h-3 w-3 rounded-sm" style={{ imageRendering: 'auto' }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-      ) : (
-        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+    <div className="group px-4 py-3 transition-colors hover:bg-[var(--bg-hover)] border-b" style={{ borderColor: 'var(--border-dim)' }}>
+      {/* Top row: category badge + time + pin */}
+      <div className="flex items-center gap-2 mb-1">
+        {activeTab === 'all' && (
+          <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono"
+            style={{ color: catColor, background: `${catColor}10`, border: `1px solid ${catColor}20` }}>
+            {item.category === 'Politics' ? 'Politica' : item.category === 'Economy' ? 'Economia' : item.category === 'World' ? 'Mondo' : 'Cronaca'}
+          </span>
+        )}
+        {item.isBreaking && (
+          <span className="rounded px-1.5 py-0.5 text-[9px] font-bold font-mono breaking-indicator"
+            style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626' }}>
+            BREAKING
+          </span>
+        )}
+        <span className="flex-1" />
+        <span className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--text-muted)' }}>
+          {formatTime(item.publishedAt)}
+        </span>
+        <button onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+          className="text-[10px] transition-opacity" style={{ opacity: pinned ? 1 : 0.25, color: pinned ? '#EC9A3C' : 'var(--text-dim)' }}>
+          ★
+        </button>
+      </div>
+
+      {/* Title — clickable to expand */}
+      <button onClick={onToggle} className="text-left w-full">
+        <p className={`text-[13px] leading-relaxed font-medium transition-colors ${expanded ? 'text-white' : ''}`}
+          style={{ color: expanded ? '#fff' : item.isBreaking ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+          {item.title}
+        </p>
+        {/* Description preview — always show 1 line; when expanded show all */}
+        {item.description && (
+          <p className={`mt-1 text-[11px] leading-relaxed ${expanded ? '' : 'line-clamp-1'}`}
+            style={{ color: 'var(--text-dim)' }}>
+            {item.description}
+          </p>
+        )}
+      </button>
+
+      {/* Expanded: full text + source link */}
+      {expanded && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{item.source}</span>
+          <a href={item.url} target="_blank" rel="noopener noreferrer"
+            className="text-[10px] font-semibold transition-colors hover:text-white"
+            style={{ color: 'var(--accent)' }}
+            onClick={(e) => e.stopPropagation()}>
+            Apri su {item.source} ↗
+          </a>
+        </div>
       )}
-      {source}
-    </span>
+    </div>
   );
 }
 
@@ -203,6 +266,6 @@ function formatTime(iso: string): string {
   if (m < 1) return 'ora';
   if (m < 60) return `${m}m fa`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h fa · ${d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
+  if (h < 24) return `${h}h fa`;
   return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 }

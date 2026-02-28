@@ -7,7 +7,7 @@ import type {
   FlyToTarget, SeismicEvent, WeatherData, MarketTick, NewsItem,
   AirQualityStation, TransportAlert, EnergyData, FlightTrack,
   CyberThreat, NavalTrack, SatelliteTrack, LiveCam,
-  ShaderMode, ShaderSettings,
+  ShaderMode, ShaderSettings, ModuleId,
 } from '@/types';
 import {
   POLL_SEISMIC, POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
@@ -52,6 +52,21 @@ export interface AppStore {
   marketRegion: 'IT' | 'US';
   mapLayers: { flights: boolean; naval: boolean; cyber: boolean; satellites: boolean; seismic: boolean; traffic: boolean };
   shaderSettings: ShaderSettings;
+
+  // Module visibility (sidebar toggles)
+  visibleModules: Record<ModuleId, boolean>;
+  toggleModule: (id: ModuleId) => void;
+
+  // Webcam preview (up to 3 docked below map)
+  openWebcams: LiveCam[];
+  openWebcam: (cam: LiveCam) => void;
+  closeWebcam: (id: string) => void;
+
+  // Article modal
+  articleUrl: string | null;
+  articleTitle: string | null;
+  openArticle: (url: string, title: string) => void;
+  closeArticle: () => void;
 
   // Actions
   setSearchQuery: (q: string) => void;
@@ -100,6 +115,25 @@ export const useStore = create<AppStore>((set, get) => ({
   mapLayers: { flights: true, naval: true, cyber: true, satellites: false, seismic: true, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
+  // All modules visible by default
+  visibleModules: { markets: true, weatherAqi: true, mobility: true, cyber: true, livecams: true },
+  toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
+
+  // Webcam preview — max 3
+  openWebcams: [],
+  openWebcam: (cam) => set((s) => {
+    if (s.openWebcams.find((w) => w.id === cam.id)) return s;
+    const next = [...s.openWebcams, cam];
+    return { openWebcams: next.length > 3 ? next.slice(-3) : next };
+  }),
+  closeWebcam: (id) => set((s) => ({ openWebcams: s.openWebcams.filter((w) => w.id !== id) })),
+
+  // Article modal
+  articleUrl: null,
+  articleTitle: null,
+  openArticle: (url, title) => set({ articleUrl: url, articleTitle: title }),
+  closeArticle: () => set({ articleUrl: null, articleTitle: null }),
+
   setSearchQuery: (q) => set({ searchQuery: q }),
   setChatOpen: (open) => set({ chatOpen: open }),
   setMarketRegion: (r) => set({ marketRegion: r }),
@@ -142,8 +176,9 @@ export const useStore = create<AppStore>((set, get) => ({
       schedule('energy', 'energy', POLL_ENERGY, 'items'),
     ];
 
-    // Real flights via OpenSky
     const now = () => new Date().toISOString();
+
+    // Real flights via OpenSky
     const pollFlights = async () => {
       try {
         const d = await apiFetch('flights');

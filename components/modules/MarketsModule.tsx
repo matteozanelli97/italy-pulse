@@ -138,16 +138,14 @@ function TickRow({ tick: t, regionCurrency }: { tick: { symbol: string; name: st
   const decimals = t.price < 2 ? 4 : t.price < 100 ? 2 : t.price > 10000 ? 0 : 2;
 
   return (
-    <div className="flex items-center justify-between py-[3px] rounded px-1 transition-colors"
-      style={{
-        background: flash === 'up' ? 'rgba(50,164,103,0.08)' : flash === 'down' ? 'rgba(231,106,110,0.08)' : 'transparent',
-      }}>
+    <div className="flex items-center justify-between py-[3px] rounded px-1">
       <div className="flex items-center gap-1.5 min-w-0">
         <span className="text-[11px] font-bold font-mono" style={{ color: '#fff' }}>{t.symbol}</span>
         <span className="text-[9px] truncate" style={{ color: 'var(--text-dim)' }}>{t.name}</span>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[11px] font-bold font-mono tabular-nums" style={{ color: '#fff' }}>
+        <span className="text-[11px] font-bold font-mono tabular-nums transition-colors duration-300"
+          style={{ color: flash === 'up' ? '#32A467' : flash === 'down' ? '#E76A6E' : '#fff' }}>
           {cur}{t.price.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{unit}
         </span>
         <span className="text-[10px] font-bold font-mono tabular-nums min-w-[52px] text-right"

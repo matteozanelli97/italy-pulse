@@ -34,17 +34,22 @@ export default function Dashboard() {
         {/* Left panel: data modules */}
         <LeftPanel />
 
-        {/* Center: Map + optional webcam preview */}
+        {/* Center: Map + Chat at bottom */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          <TacticalMap />
+          <div className="flex-1 relative">
+            <TacticalMap />
+          </div>
           {openWebcams.length > 0 && <WebcamPreview />}
+          {/* LiveChat sits below map, beside IntelStream */}
+          <div className="hidden lg:block flex-shrink-0">
+            <LiveChat />
+          </div>
         </div>
 
-        {/* Right column: Intel Stream + Live Chat stacked */}
-        <div className="hidden lg:flex w-[420px] flex-shrink-0 flex-col overflow-hidden border-l"
+        {/* Right column: Intel Stream (full height, beside map+chat) */}
+        <div className="hidden lg:flex w-[380px] flex-shrink-0 flex-col overflow-hidden border-l"
           style={{ borderColor: 'var(--border-dim)' }}>
           <IntelStream />
-          <LiveChat />
         </div>
       </div>
 

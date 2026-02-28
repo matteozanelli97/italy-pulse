@@ -33,7 +33,7 @@ export default function LeftPanel() {
     >
       <div className="border-b px-4 py-2.5" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-panel)' }}>
         <div className="flex items-center gap-2.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded" style={{ background: 'rgba(0,229,255,0.08)' }}>
+          <span className="flex h-5 w-5 items-center justify-center rounded" style={{ background: 'var(--accent-muted)' }}>
             <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
               <rect x="2" y="2" width="5" height="5" rx="1" stroke="var(--cyan-500)" strokeWidth="1.3" />
               <rect x="9" y="2" width="5" height="5" rx="1" stroke="var(--cyan-500)" strokeWidth="1.3" />

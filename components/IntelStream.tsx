@@ -17,7 +17,7 @@ const CATEGORIES = [
 ] as const;
 
 const SOURCE_COLORS: Record<string, string> = {
-  ANSA: '#00bcd4', Repubblica: '#dc2626', Corriere: '#1e40af',
+  ANSA: '#2D72D2', Repubblica: '#dc2626', Corriere: '#1e40af',
   Sole24Ore: '#d97706', Adnkronos: '#059669', SkyTG24: '#0ea5e9',
   AGI: '#7c3aed', TGCOM24: '#e11d48',
 };
@@ -45,9 +45,9 @@ export default function IntelStream() {
       {/* Header */}
       <div className="border-b px-4 py-3 flex-shrink-0" style={{ borderColor: 'var(--border-dim)', background: 'var(--bg-panel)' }}>
         <div className="flex items-center gap-2.5 mb-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(0,229,255,0.08)' }}>
+          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'var(--accent-muted)' }}>
             <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-              <path d="M2 3h12M2 7h8M2 11h12M2 15h6" stroke="var(--cyan-500)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M2 3h12M2 7h8M2 11h12M2 15h6" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </span>
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--text-primary)' }}>
@@ -61,7 +61,7 @@ export default function IntelStream() {
             </span>
           )}
           <span className="rounded-full px-2 py-0.5 text-[10px] font-bold font-mono"
-            style={{ background: 'rgba(0,229,255,0.06)', color: 'var(--cyan-500)', border: '1px solid var(--border-dim)' }}>
+            style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-dim)' }}>
             {filtered.length}
           </span>
         </div>
@@ -88,9 +88,9 @@ export default function IntelStream() {
             <button key={cat.id} onClick={() => { setActiveTab(cat.id); sounds.click(); }}
               className="flex-shrink-0 rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-all"
               style={{
-                background: isActive ? (cat.id === 'all' ? 'rgba(0,229,255,0.10)' : `${catColor}15`) : 'transparent',
-                color: isActive ? (cat.id === 'all' ? 'var(--cyan-500)' : catColor) : 'var(--text-dim)',
-                border: `1px solid ${isActive ? (cat.id === 'all' ? 'rgba(0,229,255,0.20)' : `${catColor}30`) : 'transparent'}`,
+                background: isActive ? (cat.id === 'all' ? 'var(--accent-muted)' : `${catColor}15`) : 'transparent',
+                color: isActive ? (cat.id === 'all' ? 'var(--accent)' : catColor) : 'var(--text-dim)',
+                border: `1px solid ${isActive ? (cat.id === 'all' ? 'var(--border-medium)' : `${catColor}30`) : 'transparent'}`,
               }}>
               {cat.label}
             </button>
@@ -158,7 +158,7 @@ export default function IntelStream() {
                       <button
                         onClick={(e) => { e.stopPropagation(); openArticle(item.url, item.title); sounds.click(); }}
                         className="text-[10px] font-semibold uppercase tracking-wider transition-colors hover:text-white px-2 py-0.5 rounded"
-                        style={{ color: 'var(--cyan-500)', background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.15)' }}>
+                        style={{ color: 'var(--accent)', background: 'var(--accent-muted)', border: '1px solid var(--border-medium)' }}>
                         Leggi Articolo
                       </button>
                       <a href={item.url} target="_blank" rel="noopener noreferrer"

@@ -22,8 +22,8 @@ export default function ArticleModal() {
       >
         {/* Header */}
         <div className="flex items-center gap-3 border-b px-5 py-3 flex-shrink-0"
-          style={{ borderColor: 'rgba(0,229,255,0.15)', background: 'rgba(10,15,20,0.90)' }}>
-          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'rgba(0,229,255,0.08)' }}>
+          style={{ borderColor: 'var(--border-medium)', background: 'var(--bg-panel)' }}>
+          <span className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'var(--accent-muted)' }}>
             <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
               <rect x="3" y="2" width="10" height="12" rx="1.5" stroke="var(--cyan-500)" strokeWidth="1.3" />
               <path d="M6 5h4M6 7.5h4M6 10h2" stroke="var(--cyan-500)" strokeWidth="1" strokeLinecap="round" />
@@ -37,7 +37,7 @@ export default function ArticleModal() {
           </div>
           <a href={articleUrl} target="_blank" rel="noopener noreferrer"
             className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded transition-colors hover:text-white"
-            style={{ color: 'var(--cyan-500)', background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.15)' }}>
+            style={{ color: 'var(--cyan-500)', background: 'var(--accent-muted)', border: '1px solid var(--border-medium)' }}>
             Apri ↗
           </a>
           <button

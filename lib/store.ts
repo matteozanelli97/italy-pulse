@@ -7,7 +7,7 @@ import type {
   FlyToTarget, WeatherData, MarketTick, NewsItem,
   AirQualityStation, TransportAlert, EnergyData, FlightTrack,
   CyberThreat, NavalTrack, SatelliteTrack, LiveCam,
-  ShaderMode, ShaderSettings, ModuleId,
+  ServiceStatus, ShaderMode, ShaderSettings, ModuleId,
 } from '@/types';
 import {
   POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
@@ -44,6 +44,7 @@ export interface AppStore {
   naval: SourceSlice<NavalTrack>;
   satellites: SourceSlice<SatelliteTrack>;
   livecams: SourceSlice<LiveCam>;
+  serviceStatus: SourceSlice<ServiceStatus>;
 
   // Custom weather search results
   searchedWeather: WeatherData[];
@@ -110,6 +111,7 @@ export const useStore = create<AppStore>((set, get) => ({
   naval: emptySlice(),
   satellites: emptySlice(),
   livecams: { data: [], loading: false, lastUpdate: null, error: false },
+  serviceStatus: emptySlice(),
 
   searchedWeather: [],
   setSearchedWeather: (data) => set({ searchedWeather: data }),
@@ -221,6 +223,18 @@ export const useStore = create<AppStore>((set, get) => ({
         set({ livecams: { data: [], loading: false, lastUpdate: now(), error: true } });
       }
     })();
+
+    // Service status (real-time checks every 60s)
+    const pollServiceStatus = async () => {
+      try {
+        const d = await apiFetch('servicestatus');
+        set({ serviceStatus: { data: (d.services ?? []) as ServiceStatus[], loading: false, lastUpdate: now(), error: false } });
+      } catch {
+        set((s) => ({ serviceStatus: { ...s.serviceStatus, loading: false, error: true } }));
+      }
+    };
+    pollServiceStatus();
+    timers.push(setInterval(pollServiceStatus, 60_000));
 
     set({ _timers: timers });
   },

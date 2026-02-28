@@ -13,7 +13,7 @@ const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[
   { id: 'markets', label: 'MERCATI', Component: MarketsModule },
   { id: 'weatherAqi', label: 'METEO & AQI', Component: WeatherAQIModule },
   { id: 'mobility', label: 'VIABILITÀ', Component: MobilityModule },
-  { id: 'cyber', label: 'CYBER INTEL', Component: CyberModule },
+  { id: 'cyber', label: 'STATO SERVIZI ITALIA', Component: CyberModule },
   { id: 'livecams', label: 'LIVE CAMS', Component: LiveCamsModule },
 ];
 

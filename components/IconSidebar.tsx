@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { MODULES } from '@/lib/constants';
 import { sounds } from '@/lib/sounds';
 
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, React.ReactNode> = {
   markets: (
     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
       <path d="M3 15l4-5 3 3 7-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

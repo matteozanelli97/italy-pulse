@@ -103,8 +103,9 @@ export interface SatelliteTrack {
 
 export interface LiveCam {
   id: string; city: string; title: string;
-  url: string; thumbnail?: string;
+  url: string; thumbnail?: string; embedUrl?: string;
   type: 'webcam' | 'stream' | 'news';
+  active?: boolean;
 }
 
 export interface ChatMessage {

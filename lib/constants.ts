@@ -14,12 +14,11 @@ export const ITALY_BOUNDS = {
 } as const;
 
 // Polling intervals (ms)
-export const POLL_SEISMIC = 30_000;
 export const POLL_WEATHER = 300_000;
-export const POLL_MARKETS = 60_000;
+export const POLL_MARKETS = 10_000;       // Fast polling for live ticker
 export const POLL_NEWS = 120_000;
 export const POLL_AIR_QUALITY = 600_000;
-export const POLL_TRANSPORT = 180_000;
+export const POLL_TRANSPORT = 120_000;
 export const POLL_ENERGY = 300_000;
 export const POLL_SATELLITES = 30_000;
 
@@ -47,20 +46,20 @@ export const MONITORED_CITIES = [
 ] as const;
 
 export const SEVERITY_COLORS = {
-  low: '#3b82f6', medium: '#f59e0b', high: '#ef4444', critical: '#dc2626',
+  low: '#2D72D2', medium: '#EC9A3C', high: '#E76A6E', critical: '#CD4246',
 } as const;
 
 // News category colors
 export const CATEGORY_COLORS: Record<string, string> = {
   Politics: '#8b5cf6',
-  Defense: '#ef4444',
-  Economy: '#f59e0b',
-  World: '#3b82f6',
+  Defense: '#E76A6E',
+  Economy: '#EC9A3C',
+  World: '#2D72D2',
   Cronaca: '#ec4899',
-  Entertainment: '#10b981',
+  Entertainment: '#32A467',
 };
 
-// Left panel modules — fixed, no drag-drop
+// Left panel modules
 export const MODULES: ModuleConfig[] = [
   { id: 'markets', label: 'Mercati', description: 'Mercati IT/US + Energia', icon: 'markets' },
   { id: 'weatherAqi', label: 'Meteo & AQI', description: 'Meteo + Qualità Aria', icon: 'weather' },
@@ -93,3 +92,35 @@ export const SOURCE_FAVICONS: Record<string, string> = {
   Twitter: 'https://abs.twimg.com/favicons/twitter.3.ico',
   YouTube: 'https://www.youtube.com/s/desktop/favicon.ico',
 };
+
+// Italian highways for mobility module
+export const ITALIAN_HIGHWAYS = [
+  { code: 'A1', name: 'Autostrada del Sole', route: 'Milano - Roma - Napoli', km: 759 },
+  { code: 'A4', name: 'Serenissima', route: 'Torino - Milano - Venezia - Trieste', km: 517 },
+  { code: 'A14', name: 'Adriatica', route: 'Bologna - Bari - Taranto', km: 743 },
+  { code: 'A3', name: 'SA-RC', route: 'Salerno - Reggio Calabria', km: 443 },
+  { code: 'A12', name: 'Azzurra', route: 'Genova - Livorno', km: 155 },
+  { code: 'A13', name: 'BO-PD', route: 'Bologna - Padova', km: 116 },
+  { code: 'A7', name: 'Serravalle', route: 'Milano - Genova', km: 134 },
+  { code: 'A22', name: 'Brennero', route: 'Brennero - Modena', km: 314 },
+] as const;
+
+export const MAJOR_AIRPORTS = [
+  { code: 'FCO', name: 'Fiumicino', city: 'Roma' },
+  { code: 'MXP', name: 'Malpensa', city: 'Milano' },
+  { code: 'LIN', name: 'Linate', city: 'Milano' },
+  { code: 'NAP', name: 'Capodichino', city: 'Napoli' },
+  { code: 'VCE', name: 'Marco Polo', city: 'Venezia' },
+  { code: 'BLQ', name: 'Marconi', city: 'Bologna' },
+  { code: 'CTA', name: 'Fontanarossa', city: 'Catania' },
+  { code: 'PMO', name: 'Falcone-Borsellino', city: 'Palermo' },
+] as const;
+
+export const MAJOR_PORTS = [
+  { name: 'Genova', type: 'Commerciale' },
+  { name: 'Trieste', type: 'Commerciale' },
+  { name: 'Gioia Tauro', type: 'Container' },
+  { name: 'Napoli', type: 'Commerciale/Passeggeri' },
+  { name: 'Livorno', type: 'Commerciale' },
+  { name: 'La Spezia', type: 'Commerciale' },
+] as const;

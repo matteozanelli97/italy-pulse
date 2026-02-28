@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useStore } from '@/lib/store';
-import { ITALY_CENTER, ITALY_ZOOM, ITALY_PITCH, ITALY_BEARING, ITALY_BOUNDS, SEVERITY_COLORS } from '@/lib/constants';
+import { ITALY_CENTER, ITALY_ZOOM, ITALY_PITCH, ITALY_BEARING, ITALY_BOUNDS } from '@/lib/constants';
 import { sounds } from '@/lib/sounds';
 import type { ShaderMode } from '@/types';
 
@@ -40,7 +40,6 @@ export default function TacticalMap() {
   const flyToTarget = useStore((s) => s.flyToTarget);
   const clearFlyTo = useStore((s) => s.clearFlyTo);
   const selectedMarkerId = useStore((s) => s.selectedMarkerId);
-  const earthquakes = useStore((s) => s.seismic.data);
   const flights = useStore((s) => s.flights.data);
   const cyber = useStore((s) => s.cyber.data);
   const naval = useStore((s) => s.naval.data);
@@ -122,31 +121,6 @@ export default function TacticalMap() {
     markersRef.current = [];
     let count = 0;
 
-    if (mapLayers.seismic) {
-      earthquakes.forEach((eq) => {
-        const sev = eq.magnitude >= 4.5 ? 'critical' : eq.magnitude >= 3.5 ? 'high' : eq.magnitude >= 2.5 ? 'medium' : 'low';
-        const color = SEVERITY_COLORS[sev];
-        const size = Math.max(12, eq.magnitude * 5);
-        const isSelected = selectedMarkerId === eq.id;
-        const el = document.createElement('div');
-        el.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid ${isSelected ? '#fff' : color};opacity:0.8;box-shadow:0 0 ${isSelected ? '20' : '10'}px ${color}80;cursor:pointer;transition:all 0.3s;`;
-        if (isSelected) el.style.transform = 'scale(1.5)';
-        if (eq.magnitude >= 3.0) {
-          const ring = document.createElement('div');
-          ring.style.cssText = `position:absolute;top:50%;left:50%;width:${size * 2.5}px;height:${size * 2.5}px;border-radius:50%;border:1px solid ${color};transform:translate(-50%,-50%);animation:pulse-ring 2s ease-out infinite;pointer-events:none;`;
-          el.style.position = 'relative'; el.appendChild(ring);
-        }
-        el.addEventListener('click', () => sounds.marker());
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat([eq.longitude, eq.latitude])
-          .setPopup(new maplibregl.Popup({ offset: 14, maxWidth: '280px' }).setHTML(
-            popupHtml(color, `M ${eq.magnitude.toFixed(1)} <span style="font-size:10px;opacity:0.6">${eq.magnitudeType}</span>`, eq.description || 'Zona non specificata',
-              `DEPTH: ${eq.depth.toFixed(1)}km | ${new Date(eq.time).toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}`)
-          )).addTo(map);
-        markersRef.current.push(marker); count++;
-      });
-    }
-
     if (mapLayers.flights) {
       flights.forEach((fl) => {
         const isMil = fl.type === 'military';
@@ -216,7 +190,7 @@ export default function TacticalMap() {
 
     setMarkerCount(count);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [earthquakes, flights, cyber, naval, satellites, selectedMarkerId, mapLayers]);
+  }, [flights, cyber, naval, satellites, selectedMarkerId, mapLayers]);
 
   useEffect(() => { updateMarkers(); }, [updateMarkers]);
 
@@ -245,10 +219,10 @@ export default function TacticalMap() {
       {/* Layer controls — glassmorphic HUD */}
       <div className="absolute top-3 left-3 z-[2] glass-panel flex items-center gap-2 rounded-lg px-3 py-2">
         <span className="mr-1 font-mono text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Layer</span>
-        {(['seismic', 'flights', 'naval', 'cyber', 'satellites'] as const).map((layer) => (
+        {(['flights', 'naval', 'cyber', 'satellites'] as const).map((layer) => (
           <button key={layer} onClick={() => { toggleMapLayer(layer); sounds.toggle(); }}
             className={`layer-btn text-[9px] px-2 py-0.5 ${mapLayers[layer] ? 'active' : ''}`}>
-            {layer === 'seismic' ? 'Sisma' : layer === 'flights' ? 'Voli' : layer === 'naval' ? 'Navi' : layer === 'satellites' ? 'Sat' : 'Cyber'}
+            {layer === 'flights' ? 'Voli' : layer === 'naval' ? 'Navi' : layer === 'satellites' ? 'Sat' : 'Cyber'}
           </button>
         ))}
       </div>

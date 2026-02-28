@@ -7,7 +7,6 @@ export default function TopBar() {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const [ping, setPing] = useState(0);
-  const seismic = useStore((s) => s.seismic);
   const weather = useStore((s) => s.weather);
   const markets = useStore((s) => s.markets);
   const news = useStore((s) => s.news);
@@ -31,7 +30,7 @@ export default function TopBar() {
     const measure = async () => {
       const t0 = performance.now();
       try {
-        await fetch('/api/seismic', { method: 'HEAD' }).catch(() => {});
+        await fetch('/api/weather', { method: 'HEAD' }).catch(() => {});
         setPing(Math.round(performance.now() - t0));
       } catch { setPing(0); }
     };
@@ -40,7 +39,7 @@ export default function TopBar() {
     return () => clearInterval(id);
   }, []);
 
-  const sources = [seismic, weather, markets, news, flights, cyber, naval, satellites];
+  const sources = [weather, markets, news, flights, cyber, naval, satellites];
   const activeSources = sources.filter((s) => !s.loading || s.data.length > 0).length;
   const totalDataPoints = sources.reduce((sum, s) => sum + s.data.length, 0);
   const errorSources = sources.filter((s) => s.error).length;
@@ -89,7 +88,7 @@ export default function TopBar() {
       {/* Right — Technical info */}
       <div className="flex items-center gap-2.5">
         <Pill label="PING" value={`${ping}ms`} status={ping > 500 ? 'warn' : 'ok'} />
-        <Pill label="FONTI" value={`${activeSources}/8`} status={errorSources > 0 ? 'warn' : 'ok'} />
+        <Pill label="FONTI" value={`${activeSources}/7`} status={errorSources > 0 ? 'warn' : 'ok'} />
         <Pill label="DATI" value={`${totalDataPoints}`} />
         <Pill label="AES-256" value="CRYPT" />
         <div className="relative flex h-3 w-3 ml-1">

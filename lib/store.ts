@@ -4,13 +4,13 @@
 
 import { create } from 'zustand';
 import type {
-  FlyToTarget, SeismicEvent, WeatherData, MarketTick, NewsItem,
+  FlyToTarget, WeatherData, MarketTick, NewsItem,
   AirQualityStation, TransportAlert, EnergyData, FlightTrack,
   CyberThreat, NavalTrack, SatelliteTrack, LiveCam,
   ShaderMode, ShaderSettings, ModuleId,
 } from '@/types';
 import {
-  POLL_SEISMIC, POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
+  POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
   POLL_AIR_QUALITY, POLL_TRANSPORT, POLL_ENERGY, POLL_SATELLITES,
 } from '@/lib/constants';
 import { generateCyberThreats, generateNavalTracks } from '@/lib/mock-data';
@@ -32,8 +32,7 @@ export interface AppStore {
   selectMarker: (id: string | null, type?: string | null) => void;
   clearFlyTo: () => void;
 
-  // Data sources
-  seismic: SourceSlice<SeismicEvent>;
+  // Data sources (no seismic)
   weather: SourceSlice<WeatherData>;
   markets: SourceSlice<MarketTick>;
   news: SourceSlice<NewsItem>;
@@ -46,11 +45,15 @@ export interface AppStore {
   satellites: SourceSlice<SatelliteTrack>;
   livecams: SourceSlice<LiveCam>;
 
+  // Custom weather search results
+  searchedWeather: WeatherData[];
+  setSearchedWeather: (data: WeatherData[]) => void;
+
   // UI
   searchQuery: string;
   chatOpen: boolean;
   marketRegion: 'IT' | 'US';
-  mapLayers: { flights: boolean; naval: boolean; cyber: boolean; satellites: boolean; seismic: boolean; traffic: boolean };
+  mapLayers: { flights: boolean; naval: boolean; cyber: boolean; satellites: boolean; traffic: boolean };
   shaderSettings: ShaderSettings;
 
   // Module visibility (sidebar toggles)
@@ -96,7 +99,6 @@ export const useStore = create<AppStore>((set, get) => ({
   selectMarker: (id, type = null) => set({ selectedMarkerId: id, selectedMarkerType: type }),
   clearFlyTo: () => set({ flyToTarget: null }),
 
-  seismic: emptySlice(),
   weather: emptySlice(),
   markets: emptySlice(),
   news: emptySlice(),
@@ -109,17 +111,18 @@ export const useStore = create<AppStore>((set, get) => ({
   satellites: emptySlice(),
   livecams: { data: [], loading: false, lastUpdate: null, error: false },
 
+  searchedWeather: [],
+  setSearchedWeather: (data) => set({ searchedWeather: data }),
+
   searchQuery: '',
   chatOpen: false,
   marketRegion: 'IT',
-  mapLayers: { flights: true, naval: true, cyber: true, satellites: false, seismic: true, traffic: false },
+  mapLayers: { flights: true, naval: true, cyber: true, satellites: false, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  // All modules visible by default
   visibleModules: { markets: true, weatherAqi: true, mobility: true, cyber: true, livecams: true },
   toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
 
-  // Webcam preview — max 3
   openWebcams: [],
   openWebcam: (cam) => set((s) => {
     if (s.openWebcams.find((w) => w.id === cam.id)) return s;
@@ -128,7 +131,6 @@ export const useStore = create<AppStore>((set, get) => ({
   }),
   closeWebcam: (id) => set((s) => ({ openWebcams: s.openWebcams.filter((w) => w.id !== id) })),
 
-  // Article modal
   articleUrl: null,
   articleTitle: null,
   openArticle: (url, title) => set({ articleUrl: url, articleTitle: title }),
@@ -149,11 +151,13 @@ export const useStore = create<AppStore>((set, get) => ({
     const store = get();
     store._timers.forEach(clearInterval);
 
-    type SourceKey = 'seismic' | 'weather' | 'markets' | 'news' | 'airQuality' | 'transport' | 'energy';
+    type SourceKey = 'weather' | 'markets' | 'news' | 'airQuality' | 'transport' | 'energy';
 
     const poll = async (endpoint: string, key: SourceKey, dataKey: string) => {
       try {
-        const d = await apiFetch(endpoint);
+        const region = get().marketRegion;
+        const ep = key === 'markets' ? `${endpoint}?region=${region}` : endpoint;
+        const d = await apiFetch(ep);
         const items = (d[dataKey] ?? []) as unknown[];
         set({ [key]: { data: items, loading: false, lastUpdate: new Date().toISOString(), error: false } } as Partial<AppStore>);
       } catch {
@@ -167,7 +171,6 @@ export const useStore = create<AppStore>((set, get) => ({
     };
 
     const timers: ReturnType<typeof setInterval>[] = [
-      schedule('seismic', 'seismic', POLL_SEISMIC, 'events'),
       schedule('weather', 'weather', POLL_WEATHER, 'cities'),
       schedule('markets', 'markets', POLL_MARKETS, 'ticks'),
       schedule('news', 'news', POLL_NEWS, 'items'),

@@ -1,63 +1,66 @@
 @import "tailwindcss";
 
 /* ============================================================
-   ITALY PULSE — Palantir Gotham Theme
+   ITALY PULSE — Palantir Gotham Military Theme
+   Clean lines, professional, C4ISR aesthetic
    ============================================================ */
 
 :root {
-  /* Palantir Gotham palette */
-  --bg-deepest: #030810;
-  --bg-deep: #060c14;
-  --bg-panel: #0a1018;
-  --bg-card: #0e151e;
-  --bg-hover: #131c28;
-  --bg-active: #1a2535;
-  --bg-elevated: #1e2d40;
+  /* Palantir Gotham background scale */
+  --bg-deepest: #10141B;
+  --bg-deep: #141920;
+  --bg-panel: #1C2127;
+  --bg-card: #252A31;
+  --bg-hover: #2F343C;
+  --bg-active: #383E47;
+  --bg-elevated: #404854;
 
-  /* Neon cyan accent system */
-  --cyan-500: #00E5FF;
-  --cyan-400: #18FFFF;
-  --cyan-300: #84FFFF;
-  --blue-950: #081428;
-  --blue-900: #0c1e3a;
-  --blue-800: #1e3a5f;
-  --blue-700: #1d4ed8;
-  --blue-600: #2563eb;
-  --blue-500: #00bcd4;
-  --blue-400: #00E5FF;
-  --blue-300: #84FFFF;
+  /* Palantir Blue accent system (replaces neon cyan) */
+  --cyan-500: #2D72D2;
+  --cyan-400: #4C90F0;
+  --cyan-300: #6BABF7;
+  --blue-950: #0C1D3A;
+  --blue-900: #132744;
+  --blue-800: #1F3D5F;
+  --blue-700: #215DB0;
+  --blue-600: #2D72D2;
+  --blue-500: #4C90F0;
+  --blue-400: #6BABF7;
+  --blue-300: #8ABBFF;
 
-  --accent: #00E5FF;
-  --accent-dim: #18FFFF;
-  --accent-bright: #84FFFF;
-  --accent-muted: rgba(0, 229, 255, 0.15);
+  --accent: #2D72D2;
+  --accent-dim: #4C90F0;
+  --accent-bright: #6BABF7;
+  --accent-muted: rgba(45, 114, 210, 0.15);
 
-  /* Borders — cyan-based */
-  --border-dim: rgba(0, 229, 255, 0.06);
-  --border-subtle: rgba(0, 229, 255, 0.12);
-  --border-medium: rgba(0, 229, 255, 0.22);
-  --border-bright: rgba(0, 229, 255, 0.40);
+  /* Borders — blue-based, subtle */
+  --border-dim: rgba(45, 114, 210, 0.08);
+  --border-subtle: rgba(45, 114, 210, 0.15);
+  --border-medium: rgba(45, 114, 210, 0.25);
+  --border-bright: rgba(45, 114, 210, 0.40);
 
-  /* Military / warning palette */
-  --amber: #FF6D00;
+  /* Palantir functional palette */
+  --amber: #EC9A3C;
+  --green: #32A467;
+  --red: #E76A6E;
   --nvg-green: #4AF626;
-  --severity-low: #00bcd4;
-  --severity-medium: #f59e0b;
-  --severity-high: #ef4444;
-  --severity-critical: #dc2626;
+  --severity-low: #2D72D2;
+  --severity-medium: #EC9A3C;
+  --severity-high: #E76A6E;
+  --severity-critical: #CD4246;
 
-  /* Text */
-  --text-primary: #e4ecf7;
-  --text-secondary: #9cb3cf;
-  --text-dim: #607590;
-  --text-muted: #384b63;
+  /* Text — warm whites, Palantir grays */
+  --text-primary: #F6F7F9;
+  --text-secondary: #ABB3BF;
+  --text-dim: #738091;
+  --text-muted: #5F6B7C;
 
   /* Shadows */
   --shadow-panel: 0 1px 4px rgba(0,0,0,0.5), 0 0 24px rgba(0,0,0,0.3);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.02);
-  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.03);
-  --glow: 0 0 20px rgba(0, 229, 255, 0.10);
-  --glow-cyan: 0 0 12px rgba(0, 229, 255, 0.25);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.6), 0 0 40px rgba(0,0,0,0.2);
+  --glow: 0 0 12px rgba(45, 114, 210, 0.08);
+  --glow-cyan: 0 0 8px rgba(45, 114, 210, 0.15);
 }
 
 @theme inline {
@@ -67,7 +70,7 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
-* { scrollbar-width: thin; scrollbar-color: rgba(0,229,255,0.08) transparent; }
+* { scrollbar-width: thin; scrollbar-color: rgba(45,114,210,0.10) transparent; }
 html, body { height: 100%; overflow: hidden; }
 body {
   background: var(--bg-deepest);
@@ -81,46 +84,46 @@ body {
 .font-mono { font-family: "JetBrains Mono", monospace; }
 
 .bg-dot-pattern {
-  background-image: linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(45,114,210,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45,114,210,0.03) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-/* Glassmorphic panel */
+/* Glassmorphic panel — clean military */
 .glass-panel {
-  background: rgba(10,15,20,0.70);
+  background: rgba(28,33,39,0.85);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(0,229,255,0.30);
+  border: 1px solid rgba(45,114,210,0.18);
   box-shadow: var(--shadow-elevated);
 }
 
 /* MapLibre */
 .maplibregl-map { font-family: "JetBrains Mono", monospace !important; }
 .maplibregl-popup-content {
-  background: rgba(10,15,20,0.92) !important; border: 1px solid rgba(0,229,255,0.25) !important;
-  box-shadow: var(--shadow-elevated) !important; border-radius: 8px !important;
+  background: rgba(28,33,39,0.95) !important; border: 1px solid rgba(45,114,210,0.20) !important;
+  box-shadow: var(--shadow-elevated) !important; border-radius: 6px !important;
   color: var(--text-primary) !important; padding: 12px 16px !important;
   font-size: 12px !important; font-family: "JetBrains Mono", monospace !important;
   backdrop-filter: blur(12px) !important;
 }
-.maplibregl-popup-tip { border-top-color: rgba(10,15,20,0.92) !important; }
+.maplibregl-popup-tip { border-top-color: rgba(28,33,39,0.95) !important; }
 .maplibregl-popup-close-button { color: var(--text-dim) !important; font-size: 18px !important; padding: 4px 8px !important; }
-.maplibregl-ctrl-attrib { background: rgba(3,8,16,0.95) !important; color: var(--text-muted) !important; font-size: 9px !important; }
-.maplibregl-ctrl-group { background: rgba(10,15,20,0.90) !important; border: 1px solid rgba(0,229,255,0.15) !important; border-radius: 8px !important; box-shadow: var(--shadow-panel) !important; backdrop-filter: blur(8px) !important; }
-.maplibregl-ctrl-group button { background: transparent !important; border-color: rgba(0,229,255,0.08) !important; color: var(--text-secondary) !important; }
-.maplibregl-ctrl-group button:hover { background: rgba(0,229,255,0.06) !important; color: var(--accent) !important; }
-.maplibregl-ctrl-group button + button { border-top: 1px solid rgba(0,229,255,0.08) !important; }
+.maplibregl-ctrl-attrib { background: rgba(16,20,27,0.95) !important; color: var(--text-muted) !important; font-size: 9px !important; }
+.maplibregl-ctrl-group { background: rgba(28,33,39,0.90) !important; border: 1px solid rgba(45,114,210,0.12) !important; border-radius: 6px !important; box-shadow: var(--shadow-panel) !important; backdrop-filter: blur(8px) !important; }
+.maplibregl-ctrl-group button { background: transparent !important; border-color: rgba(45,114,210,0.08) !important; color: var(--text-secondary) !important; }
+.maplibregl-ctrl-group button:hover { background: rgba(45,114,210,0.08) !important; color: var(--accent) !important; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid rgba(45,114,210,0.08) !important; }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.10); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,0.20); }
+::-webkit-scrollbar-thumb { background: rgba(45,114,210,0.12); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(45,114,210,0.22); }
 
 /* Animations */
-@keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+@keyframes pulse-ring { 0% { transform: translate(-50%,-50%) scale(1); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; } }
 @keyframes glow-breathe { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes scan-line { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
-@keyframes data-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--accent); } 50% { box-shadow: 0 0 8px 2px rgba(0,229,255,0.2); } }
+@keyframes data-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--accent); } 50% { box-shadow: 0 0 6px 2px rgba(45,114,210,0.15); } }
 @keyframes shimmer-load { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes slide-up-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes float-up { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -133,6 +136,7 @@ body {
   70% { transform: translate(2%, -1%); }
   90% { transform: translate(-1%, 2%); }
 }
+@keyframes ticker-flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
 .animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
 .animate-glow-breathe { animation: glow-breathe 3s ease-in-out infinite; }
@@ -143,21 +147,22 @@ body {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
   background-size: 200% 100%; animation: shimmer-load 1.8s ease-in-out infinite;
 }
+.animate-ticker-flash { animation: ticker-flash 0.3s ease-out; }
 
-/* Text glow */
-.text-glow { text-shadow: 0 0 12px rgba(0,229,255,0.4); }
-.text-glow-amber { text-shadow: 0 0 12px rgba(255,109,0,0.4); }
-.border-glow { box-shadow: inset 0 0 20px rgba(0,229,255,0.04), var(--shadow-panel); }
+/* Text glow — subtle */
+.text-glow { text-shadow: 0 0 8px rgba(45,114,210,0.3); }
+.text-glow-amber { text-shadow: 0 0 8px rgba(236,154,60,0.3); }
+.border-glow { box-shadow: inset 0 0 12px rgba(45,114,210,0.03), var(--shadow-panel); }
 
 /* Panel / Card */
 .panel-glass { background: var(--bg-panel); border: 1px solid var(--border-dim); box-shadow: var(--shadow-panel); }
 
 .module-card {
   background: var(--bg-card); border: 1px solid var(--border-dim);
-  border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-card);
+  border-radius: 6px; overflow: hidden; box-shadow: var(--shadow-card);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
-.module-card:hover { border-color: var(--border-subtle); box-shadow: var(--shadow-card), 0 0 12px rgba(0,229,255,0.04); }
+.module-card:hover { border-color: var(--border-subtle); box-shadow: var(--shadow-card), 0 0 8px rgba(45,114,210,0.04); }
 
 /* Badges */
 .badge {
@@ -165,17 +170,17 @@ body {
   padding: 2px 8px; border-radius: 4px; font-size: 10px;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
   font-family: "JetBrains Mono", monospace;
-  background: rgba(0,229,255,0.08); color: var(--cyan-500);
-  border: 1px solid rgba(0,229,255,0.15);
+  background: rgba(45,114,210,0.08); color: var(--cyan-500);
+  border: 1px solid rgba(45,114,210,0.15);
 }
-.badge-severity-low { background: rgba(0,188,212,0.08); color: #00bcd4; border-color: rgba(0,188,212,0.18); }
-.badge-severity-medium { background: rgba(245,158,11,0.08); color: #f59e0b; border-color: rgba(245,158,11,0.18); }
-.badge-severity-high { background: rgba(239,68,68,0.08); color: #ef4444; border-color: rgba(239,68,68,0.18); }
-.badge-severity-critical { background: rgba(220,38,38,0.10); color: #dc2626; border-color: rgba(220,38,38,0.20); }
+.badge-severity-low { background: rgba(45,114,210,0.08); color: #2D72D2; border-color: rgba(45,114,210,0.18); }
+.badge-severity-medium { background: rgba(236,154,60,0.08); color: #EC9A3C; border-color: rgba(236,154,60,0.18); }
+.badge-severity-high { background: rgba(231,106,110,0.08); color: #E76A6E; border-color: rgba(231,106,110,0.18); }
+.badge-severity-critical { background: rgba(205,66,70,0.10); color: #CD4246; border-color: rgba(205,66,70,0.20); }
 
 /* Layer buttons */
 .layer-btn {
-  padding: 5px 12px; border-radius: 6px; font-size: 11px;
+  padding: 5px 12px; border-radius: 4px; font-size: 11px;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
   font-family: "JetBrains Mono", monospace;
   border: 1px solid var(--border-dim); background: var(--bg-card);
@@ -183,8 +188,8 @@ body {
 }
 .layer-btn:hover { border-color: var(--border-subtle); color: var(--text-secondary); }
 .layer-btn.active {
-  border-color: var(--cyan-500); background: rgba(0,229,255,0.08);
-  color: var(--cyan-500); box-shadow: 0 0 8px rgba(0,229,255,0.12);
+  border-color: var(--cyan-500); background: rgba(45,114,210,0.10);
+  color: var(--cyan-500); box-shadow: 0 0 6px rgba(45,114,210,0.10);
 }
 
 /* Source tags */
@@ -193,8 +198,8 @@ body {
   padding: 2px 7px; border-radius: 4px; font-size: 10px;
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
   font-family: "JetBrains Mono", monospace;
-  background: rgba(0,229,255,0.05); color: var(--cyan-500);
-  border: 1px solid rgba(0,229,255,0.10);
+  background: rgba(45,114,210,0.05); color: var(--cyan-500);
+  border: 1px solid rgba(45,114,210,0.10);
 }
 
 /* Chat */
@@ -204,14 +209,14 @@ body {
 @keyframes init-dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
 
 /* Map markers */
-.tactical-marker { width: 16px; height: 16px; border-radius: 50%; background: var(--cyan-500); border: 2px solid var(--cyan-300); box-shadow: 0 0 12px rgba(0,229,255,0.5); animation: data-pulse 2s ease-in-out infinite; }
-.tactical-marker-critical { background: #dc2626; border-color: #fca5a5; box-shadow: 0 0 12px rgba(220,38,38,0.5); }
+.tactical-marker { width: 16px; height: 16px; border-radius: 50%; background: var(--cyan-500); border: 2px solid var(--cyan-300); box-shadow: 0 0 8px rgba(45,114,210,0.4); animation: data-pulse 2s ease-in-out infinite; }
+.tactical-marker-critical { background: #CD4246; border-color: #E76A6E; box-shadow: 0 0 8px rgba(205,66,70,0.4); }
 
 /* ============================================================
    Shader Overlay Effects (Post-Processing)
    ============================================================ */
 
-/* CRT — scanlines + vignette */
+/* CRT */
 .shader-crt { filter: contrast(1.15) saturate(0.8); }
 .shader-crt::after {
   content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none;
@@ -221,7 +226,7 @@ body {
   mix-blend-mode: multiply;
 }
 
-/* NVG — green phosphor (#4AF626) + bloom + film grain */
+/* NVG */
 .shader-nvg { filter: saturate(0) brightness(1.3) contrast(1.4); }
 .shader-nvg::after {
   content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none;
@@ -234,7 +239,7 @@ body {
   animation: film-grain 0.5s steps(4) infinite;
 }
 
-/* FLIR — thermal gradient */
+/* FLIR */
 .shader-flir { filter: saturate(0) brightness(0.95) contrast(1.6); }
 .shader-flir::after {
   content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none;
@@ -244,6 +249,11 @@ body {
 
 /* Article modal overlay */
 .article-modal-overlay {
-  background: rgba(3,8,16,0.85);
+  background: rgba(16,20,27,0.85);
   backdrop-filter: blur(8px);
 }
+
+/* Market ticker */
+.ticker-up { color: var(--green); }
+.ticker-down { color: var(--red); }
+.ticker-neutral { color: var(--text-dim); }

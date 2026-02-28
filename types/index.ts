@@ -9,13 +9,6 @@ export interface FlyToTarget {
   zoom?: number; pitch?: number; bearing?: number;
 }
 
-export interface SeismicEvent {
-  id: string; time: string;
-  latitude: number; longitude: number; depth: number;
-  magnitude: number; magnitudeType: string;
-  description: string; region: string;
-}
-
 export interface WeatherData {
   city: string; latitude: number; longitude: number;
   temperature: number; apparentTemperature: number;
@@ -42,6 +35,8 @@ export interface MarketTick {
   price: number; change24h: number; changePercent24h: number;
   lastUpdate: string; currency: string;
   sparkline?: number[];
+  region?: 'IT' | 'US';
+  category?: 'index' | 'stock' | 'crypto' | 'forex' | 'commodity' | 'bond' | 'energy';
 }
 
 export interface EnergyData {
@@ -59,10 +54,11 @@ export interface NewsItem {
 
 export interface TransportAlert {
   id: string;
-  type: 'train' | 'flight' | 'road' | 'accident' | 'delay';
+  type: 'train' | 'flight' | 'road' | 'accident' | 'delay' | 'port' | 'highway';
   title: string; description: string;
   severity: 'low' | 'medium' | 'high';
   timestamp: string; route?: string;
+  status?: 'regolare' | 'rallentato' | 'critico' | 'sospeso';
 }
 
 export interface FlightTrack {

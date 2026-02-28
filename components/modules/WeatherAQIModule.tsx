@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
+import type { WeatherData } from '@/types';
 
 const LEVEL_COLORS: Record<string, string> = {
-  good: '#00bcd4', moderate: '#18FFFF', unhealthy_sensitive: '#f59e0b',
-  unhealthy: '#ef4444', very_unhealthy: '#dc2626', hazardous: '#991b1b',
+  good: '#32A467', moderate: '#4C90F0', unhealthy_sensitive: '#EC9A3C',
+  unhealthy: '#E76A6E', very_unhealthy: '#CD4246', hazardous: '#991b1b',
 };
 
 export default function WeatherAQIModule() {
@@ -14,6 +15,9 @@ export default function WeatherAQIModule() {
   const flyTo = useStore((s) => s.flyTo);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<WeatherData[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filtered = useMemo(() => {
     if (!search) return cities.slice(0, 10);
@@ -21,7 +25,40 @@ export default function WeatherAQIModule() {
     return cities.filter((w) => w.city.toLowerCase().includes(s) || w.weatherDescription.toLowerCase().includes(s));
   }, [cities, search]);
 
+  // Search any Italian city via API
+  const doSearch = useCallback(async (q: string) => {
+    if (q.length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/weather/search?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data.cities ?? []);
+      }
+    } catch { /* ignore */ }
+    setSearching(false);
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    // Only search API if no local match and query is 3+ chars
+    debounceRef.current = setTimeout(() => {
+      const localMatch = cities.some((w) => w.city.toLowerCase().includes(value.toLowerCase()));
+      if (!localMatch && value.length >= 3) doSearch(value);
+      else setSearchResults([]);
+    }, 500);
+  }, [cities, doSearch]);
+
   const getAqi = (city: string) => stations.find((s) => s.name === city);
+
+  // Merge local filtered + search results (dedup)
+  const allResults = useMemo(() => {
+    if (searchResults.length === 0) return filtered;
+    const localNames = new Set(filtered.map((w) => w.city.toLowerCase()));
+    const extra = searchResults.filter((w) => !localNames.has(w.city.toLowerCase()));
+    return [...filtered, ...extra];
+  }, [filtered, searchResults]);
 
   if (loading && cities.length === 0) return <Shimmer />;
 
@@ -33,15 +70,17 @@ export default function WeatherAQIModule() {
           <circle cx="7" cy="7" r="4" stroke="var(--text-muted)" strokeWidth="1.3" />
           <line x1="10" y1="10" x2="13" y2="13" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca città..."
+        <input value={search} onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Cerca qualsiasi città italiana..."
           className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[var(--text-muted)]" style={{ color: 'var(--text-secondary)' }} />
-        {search && <button onClick={() => setSearch('')} className="text-[12px]" style={{ color: 'var(--text-dim)' }}>×</button>}
+        {searching && <span className="text-[9px] font-mono animate-pulse" style={{ color: 'var(--text-dim)' }}>...</span>}
+        {search && <button onClick={() => { setSearch(''); setSearchResults([]); }} className="text-[12px]" style={{ color: 'var(--text-dim)' }}>×</button>}
       </div>
 
-      {filtered.map((w) => {
+      {allResults.map((w) => {
         const aqi = getAqi(w.city);
         const isExpanded = expanded === w.city;
-        const tempColor = w.alertLevel === 'warning' ? '#ef4444' : w.alertLevel === 'watch' ? '#f59e0b' : 'var(--cyan-500)';
+        const tempColor = w.alertLevel === 'warning' ? '#E76A6E' : w.alertLevel === 'watch' ? '#EC9A3C' : '#fff';
         return (
           <div key={w.city}>
             <button onClick={() => { flyTo({ lat: w.latitude, lng: w.longitude, zoom: 9, pitch: 50 }); setExpanded(isExpanded ? null : w.city); }}
@@ -60,17 +99,17 @@ export default function WeatherAQIModule() {
             {isExpanded && (
               <div className="ml-2 mb-1.5 px-3 py-2 rounded text-[10px] space-y-1"
                 style={{ background: 'var(--bg-deepest)', border: '1px solid var(--border-dim)' }}>
-                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Percepita</span><span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{w.apparentTemperature.toFixed(1)}°C</span></div>
-                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Umidità</span><span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{w.humidity}%</span></div>
-                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Vento</span><span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{w.windSpeed.toFixed(0)} km/h ({w.windDirection}°)</span></div>
-                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Pioggia</span><span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{w.precipitation} mm</span></div>
+                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Percepita</span><span className="font-mono" style={{ color: '#fff' }}>{w.apparentTemperature.toFixed(1)}°C</span></div>
+                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Umidità</span><span className="font-mono" style={{ color: '#fff' }}>{w.humidity}%</span></div>
+                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Vento</span><span className="font-mono" style={{ color: '#fff' }}>{w.windSpeed.toFixed(0)} km/h ({w.windDirection}°)</span></div>
+                <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Pioggia</span><span className="font-mono" style={{ color: '#fff' }}>{w.precipitation} mm</span></div>
                 {aqi && (
                   <>
                     <div className="flex justify-between mt-1.5 pt-1.5 border-t" style={{ borderColor: 'var(--border-dim)' }}>
                       <span style={{ color: 'var(--text-dim)' }}>AQI EU</span>
                       <span className="font-mono" style={{ color: LEVEL_COLORS[aqi.level] }}>{aqi.aqi} ({aqi.level.replace('_', ' ')})</span>
                     </div>
-                    <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Inquinante</span><span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{aqi.dominantPollutant}</span></div>
+                    <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Inquinante</span><span className="font-mono" style={{ color: '#fff' }}>{aqi.dominantPollutant}</span></div>
                   </>
                 )}
               </div>
@@ -78,7 +117,8 @@ export default function WeatherAQIModule() {
           </div>
         );
       })}
-      {filtered.length === 0 && <p className="text-[11px] text-center py-2" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
+      {allResults.length === 0 && !searching && <p className="text-[11px] text-center py-2" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
+      {allResults.length === 0 && searching && <p className="text-[11px] text-center py-2 animate-pulse" style={{ color: 'var(--text-dim)' }}>Ricerca in corso...</p>}
     </div>
   );
 }

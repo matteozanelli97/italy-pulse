@@ -47,7 +47,7 @@ export default function IconSidebar() {
       style={{ background: 'var(--bg-deep)', borderColor: 'var(--border-dim)' }}>
       {/* Logo icon */}
       <div className="flex h-8 w-8 items-center justify-center rounded-lg mb-3"
-        style={{ background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.12)' }}>
+        style={{ background: 'var(--accent-muted)', border: '1px solid var(--border-subtle)' }}>
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
           <circle cx="12" cy="12" r="10" stroke="var(--cyan-500)" strokeWidth="1.5" />
           <circle cx="12" cy="12" r="4" stroke="var(--cyan-500)" strokeWidth="1.2" />
@@ -68,9 +68,9 @@ export default function IconSidebar() {
             title={mod.label}
             className="group relative flex h-9 w-9 items-center justify-center rounded-lg transition-all"
             style={{
-              background: active ? 'rgba(0,229,255,0.08)' : 'transparent',
+              background: active ? 'var(--accent-muted)' : 'transparent',
               color: active ? 'var(--cyan-500)' : 'var(--text-muted)',
-              border: `1px solid ${active ? 'rgba(0,229,255,0.20)' : 'transparent'}`,
+              border: `1px solid ${active ? 'var(--border-medium)' : 'transparent'}`,
             }}
           >
             {ICONS[mod.icon] || <span className="text-xs font-bold font-mono">{mod.label.charAt(0)}</span>}
@@ -81,7 +81,7 @@ export default function IconSidebar() {
             )}
             {/* Tooltip */}
             <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded px-2 py-1 text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity z-50"
-              style={{ background: 'rgba(10,15,20,0.95)', border: '1px solid rgba(0,229,255,0.20)', color: 'var(--text-primary)' }}>
+              style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}>
               {mod.label}
             </span>
           </button>

@@ -104,7 +104,7 @@ function Pill({ label, value, status }: { label: string; value: string; status?:
   return (
     <div className="hidden md:flex items-center gap-1.5 rounded px-2.5 py-1"
       style={{
-        background: status === 'warn' ? 'rgba(245,158,11,0.04)' : 'rgba(0,229,255,0.03)',
+        background: status === 'warn' ? 'rgba(245,158,11,0.04)' : 'var(--accent-muted)',
         border: `1px solid ${status === 'warn' ? 'rgba(245,158,11,0.12)' : 'var(--border-dim)'}`,
       }}>
       <span className="font-mono text-[8px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>{label}</span>

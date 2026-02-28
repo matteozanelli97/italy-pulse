@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 
-const SEV_COLORS: Record<string, string> = { low: '#00bcd4', medium: '#f59e0b', high: '#ef4444', critical: '#dc2626' };
+const SEV_COLORS: Record<string, string> = { low: '#2D72D2', medium: '#EC9A3C', high: '#E76A6E', critical: '#CD4246' };
 
 export default function CyberModule() {
   const { data: threats, loading } = useStore((s) => s.cyber);
@@ -13,7 +13,7 @@ export default function CyberModule() {
   return (
     <div className="space-y-2">
       {threats.slice(0, 8).map((ct) => {
-        const color = SEV_COLORS[ct.severity] || '#00bcd4';
+        const color = SEV_COLORS[ct.severity] || '#2D72D2';
         return (
           <button key={ct.id}
             onClick={() => { if (ct.latitude && ct.longitude) flyTo({ lat: ct.latitude, lng: ct.longitude, zoom: 8 }); }}

@@ -108,11 +108,19 @@ export async function GET() {
         let status: TransportAlert['status'] = 'regolare';
         let severity: TransportAlert['severity'] = 'low';
         let desc = 'Circolazione regolare, nessun ritardo segnalato';
-        if (hash < 8) {
+        if (hash < 4) {
+          status = 'sospeso';
+          severity = 'high';
+          const causes = ['guasto alla linea elettrica', 'intervento autorità giudiziaria', 'persona sui binari', 'guasto tecnico al treno'];
+          const cause = causes[hash % causes.length];
+          desc = `Circolazione SOSPESA per ${cause}. Treni cancellati o con origine/termine modificati. Attivato servizio bus sostitutivo. Stimata ripresa ore ${((hour + 1) % 24).toString().padStart(2, '0')}:${(minute + 30) % 60 < 10 ? '0' : ''}${(minute + 30) % 60}`;
+        } else if (hash < 12) {
           status = 'rallentato';
           severity = 'medium';
-          const delay = 10 + (hash % 20);
-          desc = `Ritardi fino a ${delay} minuti per guasto tecnico`;
+          const delay = 10 + (hash % 25);
+          const causes = ['guasto tecnico', 'condizioni meteo avverse', 'problema alla segnaletica', 'sovraffollamento', 'controllo tecnico straordinario'];
+          const cause = causes[hash % causes.length];
+          desc = `Ritardi medi di ${delay} min per ${cause}. ${delay > 20 ? 'Alcuni treni con fermate soppresse.' : 'Possibili ulteriori rallentamenti.'} Ultimo aggiornamento: ${hour}:${minute.toString().padStart(2, '0')}`;
         }
         alerts.push({
           id: `rail-${i}`, type: 'train', title: line.name,
@@ -127,11 +135,16 @@ export async function GET() {
       const hash = (hour + apt.code.charCodeAt(0)) % 50;
       let status: TransportAlert['status'] = 'regolare';
       let severity: TransportAlert['severity'] = 'low';
-      let desc = 'Operatività regolare';
-      if (hash < 4) {
+      let desc = 'Operatività regolare — partenze e arrivi nei tempi previsti';
+      if (hash < 2) {
+        status = 'critico';
+        severity = 'high';
+        desc = `Voli in ritardo 45-90 min. Cancellazioni su rotte europee per condizioni meteo. Check-in operativi, consigliato verificare stato volo prima della partenza`;
+      } else if (hash < 6) {
         status = 'rallentato';
         severity = 'medium';
-        desc = 'Ritardi 15-25 min per condizioni meteo';
+        const delay = 15 + (hash % 15);
+        desc = `Ritardi ${delay}-${delay + 10} min su partenze. Causa: ${hash % 2 === 0 ? 'slot ATC ridotti per meteo' : 'congestione traffico aereo'}. Arrivi regolari`;
       }
       alerts.push({
         id: `apt-${apt.code}`, type: 'flight', title: `${apt.code} — ${apt.name}`,

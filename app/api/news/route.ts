@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 // Massively expanded Italian news feeds
 const FEEDS = [
+  // Main Italian sources
   { url: 'https://www.ansa.it/sito/ansait_rss.xml', source: 'ANSA' },
   { url: 'https://www.repubblica.it/rss/homepage/rss2.0.xml', source: 'Repubblica' },
   { url: 'https://xml2.corrieredellasera.it/rss/homepage.xml', source: 'Corriere' },
@@ -12,17 +13,25 @@ const FEEDS = [
   { url: 'https://www.adnkronos.com/rss/ultimora', source: 'Adnkronos' },
   { url: 'https://tg24.sky.it/rss/tg24_rss.xml', source: 'SkyTG24' },
   { url: 'https://www.agi.it/rss', source: 'AGI' },
-  // Additional category feeds
+  // Category feeds
   { url: 'https://www.ansa.it/sito/notizie/politica/politica_rss.xml', source: 'ANSA' },
   { url: 'https://www.ansa.it/sito/notizie/economia/economia_rss.xml', source: 'ANSA' },
   { url: 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml', source: 'ANSA' },
   { url: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml', source: 'ANSA' },
-  { url: 'https://www.ansa.it/sito/notizie/cultura/cultura_rss.xml', source: 'ANSA' },
   { url: 'https://www.repubblica.it/rss/esteri/rss2.0.xml', source: 'Repubblica' },
   { url: 'https://www.repubblica.it/rss/economia/rss2.0.xml', source: 'Repubblica' },
   { url: 'https://www.repubblica.it/rss/politica/rss2.0.xml', source: 'Repubblica' },
-  { url: 'https://www.repubblica.it/rss/spettacoli/rss2.0.xml', source: 'Repubblica' },
   { url: 'https://www.repubblica.it/rss/cronaca/rss2.0.xml', source: 'Repubblica' },
+  // Additional sources
+  { url: 'https://www.ilfattoquotidiano.it/feed/', source: 'Il Fatto' },
+  { url: 'https://www.open.online/feed/', source: 'Open' },
+  { url: 'https://www.fanpage.it/feed/', source: 'Fanpage' },
+  { url: 'https://www.ilpost.it/feed/', source: 'Il Post' },
+  { url: 'https://www.huffingtonpost.it/feeds/index.xml', source: 'HuffPost IT' },
+  { url: 'https://www.ilgiornale.it/feed.xml', source: 'Il Giornale' },
+  { url: 'https://www.rainews.it/rss/tutti', source: 'Rai News' },
+  { url: 'https://www.lastampa.it/rss', source: 'La Stampa' },
+  { url: 'https://www.ilmessaggero.it/rss/homepage.xml', source: 'Il Messaggero' },
 ];
 
 const BREAKING_KEYWORDS = /(?:ultim.ora|breaking|urgente|allerta|terremoto.*forte|tsunami|attentato|esplosione|emergenza|strage|morti|evacuazion)/i;
@@ -128,13 +137,21 @@ function parseRssItems(xml: string, source: string): NewsItem[] {
     const pubDate = extractTag(block, 'pubDate');
     const category = extractTag(block, 'category') || 'Generale';
     if (title) {
+      // Extract image from enclosure, media:content, or description img tags
+      let imageUrl: string | undefined;
+      const enclosure = /url="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i.exec(block);
+      if (enclosure) imageUrl = enclosure[1];
+      if (!imageUrl) { const media = /<media:content[^>]+url="([^"]+)"/i.exec(block); if (media) imageUrl = media[1]; }
+      if (!imageUrl) { const imgTag = /<img[^>]+src="([^"]+)"/i.exec(description || ''); if (imgTag) imageUrl = imgTag[1]; }
+
       items.push({
         id: `${source}-${idx}-${Date.now()}`,
         title: cleanHtml(title),
-        description: cleanHtml(description).slice(0, 200),
+        description: cleanHtml(description).slice(0, 500),
         source, url: link,
         publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
         category,
+        imageUrl,
       });
       idx++;
     }

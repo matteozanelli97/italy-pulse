@@ -5,91 +5,90 @@ import { useStore } from '@/lib/store';
 import type { ServiceStatus } from '@/types';
 
 const STATUS_CFG = {
-  operational: { color: '#32A467', label: 'OK', bg: 'rgba(50,164,103,0.08)' },
-  degraded: { color: '#EC9A3C', label: 'LENTO', bg: 'rgba(236,154,60,0.08)' },
-  down: { color: '#E76A6E', label: 'DOWN', bg: 'rgba(231,106,110,0.08)' },
+  operational: { color: '#32A467', label: 'Operativo', dot: '#32A467' },
+  degraded: { color: '#EC9A3C', label: 'Rallentato', dot: '#EC9A3C' },
+  down: { color: '#E76A6E', label: 'Non disponibile', dot: '#E76A6E' },
 } as const;
 
 const CAT_LABELS: Record<string, string> = {
-  telecom: 'Telecomunicazioni', banking: 'Banche & Pagamenti', social: 'Social',
-  cloud: 'Cloud', transport: 'Trasporti', media: 'Media', gov: 'Servizi Pubblici',
+  telecom: 'Telecomunicazioni', banking: 'Banche', social: 'Social Media',
+  cloud: 'Cloud & Tech', transport: 'Trasporti', media: 'Streaming', gov: 'Pubblica Amministrazione',
 };
 
 type CatId = ServiceStatus['category'];
 
 export default function CyberModule() {
   const { data: services, loading, lastUpdate } = useStore((s) => s.serviceStatus);
-  const [expandedCat, setExpandedCat] = useState<CatId | null>(null);
+  const [expandedSvc, setExpandedSvc] = useState<string | null>(null);
 
   if (loading && services.length === 0) return <Init />;
 
   const downCount = services.filter((s) => s.status === 'down').length;
   const degradedCount = services.filter((s) => s.status === 'degraded').length;
+  const totalIssues = downCount + degradedCount;
 
   const categories = Array.from(new Set(services.map((s) => s.category)));
   const grouped = categories.map((cat) => ({
-    cat,
-    label: CAT_LABELS[cat] || cat,
+    cat, label: CAT_LABELS[cat] || cat,
     items: services.filter((s) => s.category === cat),
   }));
 
   return (
-    <div className="space-y-1.5">
-      {/* Summary */}
-      <div className="flex items-center gap-2 font-mono text-[9px]">
-        {downCount > 0 ? (
-          <span className="rounded px-1.5 py-0.5 font-bold" style={{ color: '#E76A6E', background: 'rgba(231,106,110,0.08)', border: '1px solid rgba(231,106,110,0.15)' }}>
-            {downCount} DOWN
-          </span>
-        ) : degradedCount > 0 ? (
-          <span className="rounded px-1.5 py-0.5 font-bold" style={{ color: '#EC9A3C', background: 'rgba(236,154,60,0.08)', border: '1px solid rgba(236,154,60,0.15)' }}>
-            {degradedCount} DEGRADATI
-          </span>
-        ) : (
-          <span className="rounded px-1.5 py-0.5 font-bold" style={{ color: '#32A467', background: 'rgba(50,164,103,0.08)', border: '1px solid rgba(50,164,103,0.15)' }}>
-            TUTTI OPERATIVI
-          </span>
-        )}
-        <span className="flex-1" />
-        {lastUpdate && (
-          <span style={{ color: 'var(--text-dim)' }}>{new Date(lastUpdate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>
-        )}
+    <div className="space-y-2">
+      {/* Summary bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 rounded px-2.5 py-1.5" style={{
+          background: totalIssues > 0 ? 'rgba(231,106,110,0.06)' : 'rgba(50,164,103,0.06)',
+          border: `1px solid ${totalIssues > 0 ? 'rgba(231,106,110,0.15)' : 'rgba(50,164,103,0.15)'}`,
+        }}>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: totalIssues > 0 ? '#E76A6E' : '#32A467' }} />
+            <span className="text-[10px] font-bold" style={{ color: totalIssues > 0 ? '#E76A6E' : '#32A467' }}>
+              {totalIssues > 0 ? `${totalIssues} problemi rilevati` : 'Tutti i servizi operativi'}
+            </span>
+            <span className="flex-1" />
+            <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>
+              {lastUpdate ? new Date(lastUpdate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : ''}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Category groups */}
+      {/* Services grid — Downdetector style */}
       {grouped.map(({ cat, label, items }) => {
-        const catDown = items.filter((s) => s.status !== 'operational').length;
-        const isExpanded = expandedCat === cat;
+        const catIssues = items.filter((s) => s.status !== 'operational').length;
         return (
           <div key={cat}>
-            <button onClick={() => setExpandedCat(isExpanded ? null : cat)}
-              className="flex w-full items-center gap-2 py-1 px-1.5 rounded text-left hover:bg-[var(--bg-hover)] transition-colors">
-              <span className="text-[10px] font-bold font-mono uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-              <span className="flex-1" />
-              {catDown > 0 && (
-                <span className="text-[8px] font-bold font-mono rounded px-1 py-0.5" style={{ color: '#E76A6E', background: 'rgba(231,106,110,0.08)' }}>
-                  {catDown}
-                </span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-[9px] font-bold font-mono uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{label}</span>
+              {catIssues > 0 && (
+                <span className="text-[8px] font-bold rounded-full h-3.5 min-w-[14px] flex items-center justify-center px-1"
+                  style={{ background: '#E76A6E', color: '#fff' }}>{catIssues}</span>
               )}
-              <span className="text-[9px] font-mono" style={{ color: 'var(--text-dim)' }}>{isExpanded ? '▾' : '▸'}</span>
-            </button>
-            {isExpanded && (
-              <div className="ml-2 space-y-0.5 mb-1">
-                {items.map((svc) => {
-                  const cfg = STATUS_CFG[svc.status];
-                  return (
-                    <div key={svc.id} className="flex items-center gap-2 py-0.5 px-1.5 rounded" style={{ background: 'var(--bg-card)' }}>
-                      <span className="text-[9px] font-bold font-mono w-5 text-center" style={{ color: cfg.color }}>{svc.icon}</span>
-                      <span className="text-[10px] flex-1" style={{ color: 'var(--text-secondary)' }}>{svc.name}</span>
-                      <span className="text-[9px] font-mono" style={{ color: 'var(--text-dim)' }}>{svc.latency}ms</span>
-                      <span className="text-[8px] font-bold font-mono rounded px-1.5 py-0.5" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}25` }}>
-                        {cfg.label}
-                      </span>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {items.map((svc) => {
+                const cfg = STATUS_CFG[svc.status];
+                const isExpanded = expandedSvc === svc.id;
+                return (
+                  <button key={svc.id} onClick={() => setExpandedSvc(isExpanded ? null : svc.id)}
+                    className="rounded px-2 py-1.5 text-left transition-colors hover:bg-[var(--bg-hover)]"
+                    style={{ background: 'var(--bg-card)', border: `1px solid ${svc.status !== 'operational' ? `${cfg.color}30` : 'var(--border-dim)'}` }}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+                      <span className="text-[10px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{svc.name}</span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    {isExpanded && (
+                      <div className="mt-1 pt-1 border-t space-y-0.5 text-[8px] font-mono" style={{ borderColor: 'var(--border-dim)' }}>
+                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Stato</span><span style={{ color: cfg.color }}>{cfg.label}</span></div>
+                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Latenza</span><span style={{ color: svc.latency > 3000 ? '#EC9A3C' : '#fff' }}>{svc.latency}ms</span></div>
+                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>HTTP</span><span style={{ color: '#fff' }}>{svc.httpStatus || 'N/A'}</span></div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         );
       })}

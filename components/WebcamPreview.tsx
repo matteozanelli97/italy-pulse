@@ -41,11 +41,13 @@ function CamPanel({ cam, onClose }: { cam: { id: string; title: string; city: st
         ref={iframeRef}
         src={embedSrc}
         title={cam.title}
-        className="absolute inset-0 w-full h-full"
+        className="absolute w-full h-full"
         allow="autoplay; encrypted-media"
         allowFullScreen
-        style={{ border: 'none' }}
+        style={{ border: 'none', top: '-60px', height: 'calc(100% + 120px)', pointerEvents: 'none' }}
       />
+      {/* Clickable overlay to re-enable pointer events only on our custom controls */}
+      <div className="absolute inset-0" />
 
       {/* Top overlay */}
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-2 py-1 z-10"

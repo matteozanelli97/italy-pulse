@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
-import { CATEGORY_COLORS } from '@/lib/constants';
+import { CATEGORY_COLORS, SOURCE_FAVICONS } from '@/lib/constants';
 import { sounds } from '@/lib/sounds';
 
 const CATEGORIES = [
@@ -13,9 +13,17 @@ const CATEGORIES = [
   { id: 'Cronaca', label: 'Cronaca' },
 ] as const;
 
+const SOURCE_TYPES = [
+  { id: 'all', label: 'Tutto' },
+  { id: 'news', label: 'Giornali' },
+  { id: 'x', label: 'X' },
+  { id: 'telegram', label: 'Telegram' },
+] as const;
+
 export default function IntelStream() {
   const { data: items, loading } = useStore((s) => s.news);
   const [activeTab, setActiveTab] = useState('Politics');
+  const [sourceType, setSourceType] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
@@ -24,12 +32,17 @@ export default function IntelStream() {
 
   const filtered = useMemo(() => {
     let result = items.filter((i) => i.category === activeTab);
+    if (sourceType !== 'all') {
+      if (sourceType === 'x') result = result.filter((i) => i.source === 'X' || i.source === 'Twitter');
+      else if (sourceType === 'telegram') result = result.filter((i) => i.source === 'Telegram');
+      else result = result.filter((i) => i.source !== 'X' && i.source !== 'Twitter' && i.source !== 'Telegram');
+    }
     if (search) {
       const s = search.toLowerCase();
       result = result.filter((i) => i.title.toLowerCase().includes(s) || i.description.toLowerCase().includes(s));
     }
     return result;
-  }, [items, activeTab, search]);
+  }, [items, activeTab, sourceType, search]);
 
   const breakingCount = items.filter((i) => i.isBreaking).length;
   const pinned = useMemo(() => filtered.filter((i) => pinnedIds.has(i.id)), [filtered, pinnedIds]);
@@ -73,7 +86,6 @@ export default function IntelStream() {
           <span className="rounded-full px-2 py-0.5 text-[9px] font-bold font-mono"
             style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-dim)' }}>{filtered.length}</span>
         </div>
-        {/* Search */}
         <div className="flex items-center gap-2 rounded px-2.5 py-1.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-dim)' }}>
           <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3 flex-shrink-0"><circle cx="7" cy="7" r="4" stroke="var(--text-muted)" strokeWidth="1.3" /><line x1="10" y1="10" x2="13" y2="13" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round" /></svg>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtra..."
@@ -82,7 +94,7 @@ export default function IntelStream() {
         </div>
       </div>
 
-      {/* Category Tabs — colored */}
+      {/* Category Tabs */}
       <div className="flex items-center gap-1 border-b px-3 py-1.5 flex-shrink-0" style={{ borderColor: 'var(--border-dim)' }}>
         {CATEGORIES.map((cat) => {
           const c = CATEGORY_COLORS[cat.id] || '#fff';
@@ -90,18 +102,25 @@ export default function IntelStream() {
           return (
             <button key={cat.id} onClick={() => { setActiveTab(cat.id); sounds.click(); }}
               className="flex-1 rounded-md py-1 text-[10px] font-semibold uppercase tracking-wider transition-all text-center"
-              style={{
-                background: active ? `${c}18` : 'transparent',
-                color: active ? c : 'var(--text-dim)',
-                border: `1px solid ${active ? `${c}35` : 'transparent'}`,
-              }}>
+              style={{ background: active ? `${c}18` : 'transparent', color: active ? c : 'var(--text-dim)', border: `1px solid ${active ? `${c}35` : 'transparent'}` }}>
               {cat.label}
             </button>
           );
         })}
       </div>
 
-      {/* AI Summary for active category */}
+      {/* Source type filter */}
+      <div className="flex items-center gap-1 border-b px-3 py-1 flex-shrink-0" style={{ borderColor: 'var(--border-dim)' }}>
+        {SOURCE_TYPES.map((st) => (
+          <button key={st.id} onClick={() => setSourceType(st.id)}
+            className="rounded px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider transition-all"
+            style={{ background: sourceType === st.id ? 'var(--accent-muted)' : 'transparent', color: sourceType === st.id ? 'var(--accent)' : 'var(--text-dim)', border: `1px solid ${sourceType === st.id ? 'var(--border-medium)' : 'transparent'}` }}>
+            {st.label}
+          </button>
+        ))}
+      </div>
+
+      {/* AI Summary */}
       <div className="flex-shrink-0 border-b px-3 py-1.5" style={{ borderColor: 'var(--border-dim)' }}>
         {summaries[activeTab] ? (
           <div className="rounded px-3 py-2" style={{ background: 'var(--bg-card)' }}>
@@ -133,26 +152,35 @@ export default function IntelStream() {
             <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>Nessun risultato</span>
           </div>
         ) : (
-          <AnimatePresence mode="popLayout">
-            <div>
-              {pinned.length > 0 && (
-                <>
-                  <div className="px-4 py-1 font-mono text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}>Fissate</div>
-                  {pinned.map((item) => <NI key={`p-${item.id}`} item={item} exp={expandedId === item.id} onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)} pinned onPin={() => togglePin(item.id)} />)}
-                  <div className="border-b" style={{ borderColor: 'var(--border-dim)' }} />
-                </>
-              )}
-              {unpinned.slice(0, 50).map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.006 }}>
+          <div>
+            {pinned.length > 0 && (
+              <>
+                <div className="px-4 py-1 font-mono text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}>Fissate</div>
+                {pinned.map((item) => <NI key={`p-${item.id}`} item={item} exp={expandedId === item.id} onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)} pinned onPin={() => togglePin(item.id)} />)}
+                <div className="border-b" style={{ borderColor: 'var(--border-dim)' }} />
+              </>
+            )}
+            <AnimatePresence initial={false}>
+              {unpinned.slice(0, 50).map((item) => (
+                <motion.div key={item.id}
+                  initial={{ opacity: 0, x: -20, height: 0 }}
+                  animate={{ opacity: 1, x: 0, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}>
                   <NI item={item} exp={expandedId === item.id} onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)} pinned={pinnedIds.has(item.id)} onPin={() => togglePin(item.id)} />
                 </motion.div>
               ))}
-            </div>
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
         )}
       </div>
     </div>
   );
+}
+
+function cleanDescription(text: string): string {
+  // Remove leftover HTML tags/entities that slipped through
+  return text.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function NI({ item, exp, onToggle, pinned, onPin }: {
@@ -160,49 +188,54 @@ function NI({ item, exp, onToggle, pinned, onPin }: {
   exp: boolean; onToggle: () => void; pinned: boolean; onPin: () => void;
 }) {
   const d = new Date(item.publishedAt);
-  const exactTime = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  const exactDate = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const timeStr = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = isToday ? timeStr : `${d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
+
+  const favicon = SOURCE_FAVICONS[item.source];
+  const desc = cleanDescription(item.description);
 
   return (
     <div className="px-4 py-2.5 transition-colors hover:bg-[var(--bg-hover)] border-b" style={{ borderColor: 'var(--border-dim)' }}>
-      {/* Source + time + pin */}
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-1.5 mb-1">
+        {favicon && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={favicon} alt="" className="h-3 w-3 rounded-sm flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        )}
         <span className="text-[9px] font-mono font-bold uppercase" style={{ color: 'var(--text-muted)' }}>{item.source}</span>
         {item.isBreaking && (
           <span className="rounded px-1.5 py-0.5 text-[8px] font-bold font-mono breaking-indicator"
             style={{ background: 'rgba(220,38,38,0.12)', color: '#dc2626' }}>BREAKING</span>
         )}
         <span className="flex-1" />
-        <span className="text-[9px] font-mono tabular-nums" style={{ color: 'var(--text-dim)' }}>{exactDate} {exactTime}</span>
+        <span className="text-[9px] font-mono tabular-nums" style={{ color: 'var(--text-dim)' }}>{dateStr}</span>
         <button onClick={(e) => { e.stopPropagation(); onPin(); }} className="text-[10px]"
           style={{ opacity: pinned ? 1 : 0.2, color: pinned ? '#EC9A3C' : 'var(--text-dim)' }}>★</button>
       </div>
 
-      {/* Title — click to expand */}
       <button onClick={onToggle} className="text-left w-full">
         <p className="text-[12px] leading-snug font-medium" style={{ color: item.isBreaking ? '#fff' : 'var(--text-secondary)' }}>
           {item.title}
         </p>
-        {!exp && item.description && (
-          <p className="mt-0.5 text-[10px] leading-relaxed line-clamp-1" style={{ color: 'var(--text-dim)' }}>{item.description}</p>
+        {!exp && desc && (
+          <p className="mt-0.5 text-[10px] leading-relaxed line-clamp-1" style={{ color: 'var(--text-dim)' }}>{desc}</p>
         )}
       </button>
 
-      {/* Expanded: image + full description + link */}
       {exp && (
         <div className="mt-2">
-          {item.imageUrl && (
+          {item.imageUrl && !item.imageUrl.includes('<') && (
             <div className="mb-2 rounded overflow-hidden" style={{ maxHeight: 160 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={item.imageUrl} alt="" className="w-full object-cover" style={{ maxHeight: 160 }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             </div>
           )}
-          <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--text-secondary)' }}>{item.description}</p>
+          <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--text-secondary)' }}>{desc}</p>
           <a href={item.url} target="_blank" rel="noopener noreferrer"
             className="text-[10px] font-semibold transition-colors hover:text-white"
-            style={{ color: 'var(--accent)' }}
-            onClick={(e) => e.stopPropagation()}>
+            style={{ color: 'var(--accent)' }} onClick={(e) => e.stopPropagation()}>
             Apri su {item.source} ↗
           </a>
         </div>

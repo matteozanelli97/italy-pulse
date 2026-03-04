@@ -32,6 +32,13 @@ const FEEDS = [
   { url: 'https://www.rainews.it/rss/tutti', source: 'Rai News' },
   { url: 'https://www.lastampa.it/rss', source: 'La Stampa' },
   { url: 'https://www.ilmessaggero.it/rss/homepage.xml', source: 'Il Messaggero' },
+  // International sources (for World category)
+  { url: 'https://feeds.reuters.com/reuters/topNews', source: 'Reuters' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', source: 'NYT' },
+  { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', source: 'BBC' },
+  { url: 'https://rss.cnn.com/rss/edition_world.rss', source: 'CNN' },
+  { url: 'https://www.theguardian.com/world/rss', source: 'Guardian' },
+  { url: 'https://feeds.washingtonpost.com/rss/world', source: 'WashPost' },
 ];
 
 const BREAKING_KEYWORDS = /(?:ultim.ora|breaking|urgente|allerta|terremoto.*forte|tsunami|attentato|esplosione|emergenza|strage|morti|evacuazion)/i;
@@ -41,7 +48,7 @@ function classifyCategory(title: string, description: string, feedCategory: stri
   const t = (title + ' ' + description + ' ' + feedCategory).toLowerCase();
   if (/politic|governo|parlamento|ministro|elezioni|decreto|senato|camera|premier|presidente.*repubblica/i.test(t)) return 'Politics';
   if (/econom|finanz|borsa|mercati|pil|inflaz|banca|spread|euro|lavoro|occupaz|debito|tass[ae]/i.test(t)) return 'Economy';
-  if (/mond|internazional|usa|cina|russia|europa|trump|onu|medio.?orient|africa|asia|foreign|estero|kiev|ucraina|difesa|militar|nato|guerra/i.test(t)) return 'World';
+  if (/mond|internazional|usa|cina|russia|europa|trump|onu|medio.?orient|africa|asia|foreign|estero|kiev|ucraina|difesa|militar|nato|guerra|white.?house|congress|senate|pentagon|state.?dept/i.test(t)) return 'World';
   if (/cronaca|incidente|morto|omicidio|arresto|indagine|rapina|droga|mafia|camorra|ndrangheta|femminicidio/i.test(t)) return 'Cronaca';
   // Default based on feed URL hints
   if (/politica/.test(feedCategory)) return 'Politics';
@@ -73,8 +80,14 @@ export async function GET() {
     }
 
     // Apply categorization
+    const INTERNATIONAL_SOURCES = new Set(['Reuters', 'NYT', 'BBC', 'CNN', 'Guardian', 'WashPost']);
     allItems.forEach((item) => {
-      item.category = classifyCategory(item.title, item.description, item.category);
+      // International sources always go to World category
+      if (INTERNATIONAL_SOURCES.has(item.source)) {
+        item.category = 'World';
+      } else {
+        item.category = classifyCategory(item.title, item.description, item.category);
+      }
     });
 
     // Detect breaking news
@@ -93,6 +106,15 @@ export async function GET() {
           item.isBreaking = true;
           similar.forEach((s) => { s.isBreaking = true; });
         }
+      }
+    });
+
+    // Clamp future timestamps to current time (RSS feeds sometimes have timezone issues)
+    const nowMs = Date.now();
+    allItems.forEach((item) => {
+      const pubMs = new Date(item.publishedAt).getTime();
+      if (pubMs > nowMs + 60000) { // allow 1 min tolerance
+        item.publishedAt = new Date(nowMs).toISOString();
       }
     });
 
@@ -143,6 +165,8 @@ function parseRssItems(xml: string, source: string): NewsItem[] {
       if (enclosure) imageUrl = enclosure[1];
       if (!imageUrl) { const media = /<media:content[^>]+url="([^"]+)"/i.exec(block); if (media) imageUrl = media[1]; }
       if (!imageUrl) { const imgTag = /<img[^>]+src="([^"]+)"/i.exec(description || ''); if (imgTag) imageUrl = imgTag[1]; }
+      // Validate imageUrl — must be a real URL, not HTML
+      if (imageUrl && (imageUrl.includes('<') || !imageUrl.startsWith('http'))) imageUrl = undefined;
 
       items.push({
         id: `${source}-${idx}-${Date.now()}`,
@@ -169,7 +193,13 @@ function extractTag(block: string, tag: string): string {
 }
 
 function cleanHtml(str: string): string {
-  return str.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ').trim();
+  return str
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
+    .replace(/<img[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, '').replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
 }

@@ -87,8 +87,18 @@ export const SOURCE_FAVICONS: Record<string, string> = {
   SkyTG24: 'https://tg24.sky.it/favicon.ico',
   AGI: 'https://www.agi.it/favicon.ico',
   TGCOM24: 'https://www.tgcom24.mediaset.it/favicon.ico',
+  'Il Fatto': 'https://www.ilfattoquotidiano.it/favicon.ico',
+  Open: 'https://www.open.online/favicon.ico',
+  Fanpage: 'https://www.fanpage.it/favicon.ico',
+  'Il Post': 'https://www.ilpost.it/favicon.ico',
+  'HuffPost IT': 'https://www.huffingtonpost.it/favicon.ico',
+  'Il Giornale': 'https://www.ilgiornale.it/favicon.ico',
+  'Rai News': 'https://www.rainews.it/favicon.ico',
+  'La Stampa': 'https://www.lastampa.it/favicon.ico',
+  'Il Messaggero': 'https://www.ilmessaggero.it/favicon.ico',
+  X: 'https://abs.twimg.com/favicons/twitter.3.ico',
   Twitter: 'https://abs.twimg.com/favicons/twitter.3.ico',
-  YouTube: 'https://www.youtube.com/s/desktop/favicon.ico',
+  Telegram: 'https://telegram.org/favicon.ico',
 };
 
 // Italian highways for mobility module

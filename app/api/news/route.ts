@@ -143,6 +143,8 @@ function parseRssItems(xml: string, source: string): NewsItem[] {
       if (enclosure) imageUrl = enclosure[1];
       if (!imageUrl) { const media = /<media:content[^>]+url="([^"]+)"/i.exec(block); if (media) imageUrl = media[1]; }
       if (!imageUrl) { const imgTag = /<img[^>]+src="([^"]+)"/i.exec(description || ''); if (imgTag) imageUrl = imgTag[1]; }
+      // Validate imageUrl — must be a real URL, not HTML
+      if (imageUrl && (imageUrl.includes('<') || !imageUrl.startsWith('http'))) imageUrl = undefined;
 
       items.push({
         id: `${source}-${idx}-${Date.now()}`,
@@ -169,7 +171,13 @@ function extractTag(block: string, tag: string): string {
 }
 
 function cleanHtml(str: string): string {
-  return str.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ').trim();
+  return str
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
+    .replace(/<img[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, '').replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
 }

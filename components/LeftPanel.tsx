@@ -7,6 +7,7 @@ import WeatherAQIModule from './modules/WeatherAQIModule';
 import MobilityModule from './modules/MobilityModule';
 import CyberModule from './modules/CyberModule';
 import LiveCamsModule from './modules/LiveCamsModule';
+import SeismicModule from './modules/SeismicModule';
 import type { ModuleId } from '@/types';
 
 const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[] = [
@@ -14,6 +15,7 @@ const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[
   { id: 'weatherAqi', label: 'METEO & AQI', Component: WeatherAQIModule },
   { id: 'mobility', label: 'VIABILITÀ', Component: MobilityModule },
   { id: 'cyber', label: 'STATO SERVIZI ITALIA', Component: CyberModule },
+  { id: 'seismic', label: 'SISMOGRAFO INGV', Component: SeismicModule },
   { id: 'livecams', label: 'LIVE CAMS', Component: LiveCamsModule },
 ];
 

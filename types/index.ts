@@ -112,6 +112,18 @@ export interface ServiceStatus {
   latency: number; httpStatus: number;
 }
 
+export interface SeismicEvent {
+  id: string;
+  time: string;
+  latitude: number;
+  longitude: number;
+  depth: number;
+  magnitude: number;
+  magnitudeType: string;
+  place: string;
+  region: string;
+}
+
 export interface ChatMessage {
   id: string; nickname: string; avatar: string;
   message: string; timestamp: string; location: string;
@@ -125,7 +137,7 @@ export interface ShaderSettings {
   bloom: number; sharpening: number;
 }
 
-export type ModuleId = 'markets' | 'weatherAqi' | 'mobility' | 'cyber' | 'livecams';
+export type ModuleId = 'markets' | 'weatherAqi' | 'mobility' | 'cyber' | 'livecams' | 'seismic';
 
 export interface ModuleConfig {
   id: ModuleId; label: string;

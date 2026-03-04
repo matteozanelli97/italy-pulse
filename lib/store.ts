@@ -7,7 +7,7 @@ import type {
   FlyToTarget, WeatherData, MarketTick, NewsItem,
   AirQualityStation, TransportAlert, EnergyData, FlightTrack,
   CyberThreat, NavalTrack, SatelliteTrack, LiveCam,
-  ServiceStatus, ShaderMode, ShaderSettings, ModuleId,
+  ServiceStatus, SeismicEvent, ShaderMode, ShaderSettings, ModuleId,
 } from '@/types';
 import {
   POLL_WEATHER, POLL_MARKETS, POLL_NEWS,
@@ -45,6 +45,7 @@ export interface AppStore {
   satellites: SourceSlice<SatelliteTrack>;
   livecams: SourceSlice<LiveCam>;
   serviceStatus: SourceSlice<ServiceStatus>;
+  seismic: SourceSlice<SeismicEvent>;
 
   // Custom weather search results
   searchedWeather: WeatherData[];
@@ -112,6 +113,7 @@ export const useStore = create<AppStore>((set, get) => ({
   satellites: emptySlice(),
   livecams: { data: [], loading: false, lastUpdate: null, error: false },
   serviceStatus: emptySlice(),
+  seismic: emptySlice(),
 
   searchedWeather: [],
   setSearchedWeather: (data) => set({ searchedWeather: data }),
@@ -122,7 +124,7 @@ export const useStore = create<AppStore>((set, get) => ({
   mapLayers: { flights: true, naval: true, cyber: true, satellites: false, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  visibleModules: { markets: true, weatherAqi: true, mobility: true, cyber: true, livecams: true },
+  visibleModules: { markets: true, weatherAqi: true, mobility: true, cyber: true, livecams: true, seismic: true },
   toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
 
   openWebcams: [],
@@ -223,6 +225,18 @@ export const useStore = create<AppStore>((set, get) => ({
         set({ livecams: { data: [], loading: false, lastUpdate: now(), error: true } });
       }
     })();
+
+    // Seismic data from INGV (every 120s)
+    const pollSeismic = async () => {
+      try {
+        const d = await apiFetch('seismic');
+        set({ seismic: { data: (d.events ?? []) as SeismicEvent[], loading: false, lastUpdate: now(), error: !!d.error } });
+      } catch {
+        set((s) => ({ seismic: { ...s.seismic, loading: false, error: true } }));
+      }
+    };
+    pollSeismic();
+    timers.push(setInterval(pollSeismic, 120_000));
 
     // Service status (real-time checks every 60s)
     const pollServiceStatus = async () => {

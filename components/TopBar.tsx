@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useStore } from '@/lib/store';
+import { isMuted, setMuted } from '@/lib/sounds';
 
 export default function TopBar() {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const [ping, setPing] = useState(0);
+  const [muted, setMutedState] = useState(false);
   const weather = useStore((s) => s.weather);
   const markets = useStore((s) => s.markets);
   const news = useStore((s) => s.news);
@@ -40,11 +42,18 @@ export default function TopBar() {
     return () => clearInterval(id);
   }, []);
 
-  const sources = [weather, markets, news, flights, cyber, naval, satellites];
+  const seismic = useStore((s) => s.seismic);
+  const sources = [weather, markets, news, flights, cyber, naval, satellites, seismic];
   const activeSources = sources.filter((s) => !s.loading || s.data.length > 0).length;
   const totalDataPoints = sources.reduce((sum, s) => sum + s.data.length, 0);
   const errorSources = sources.filter((s) => s.error).length;
   const downServices = serviceStatus.data.filter((s) => s.status === 'down').length;
+
+  const toggleMute = useCallback(() => {
+    const next = !muted;
+    setMutedState(next);
+    setMuted(next);
+  }, [muted]);
 
   const SZ = 'text-[11px]';
 
@@ -79,7 +88,7 @@ export default function TopBar() {
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
         <span className={`${SZ} font-bold tabular-nums tracking-wider`} style={{ color: '#fff' }}>{time}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
-        <span className={SZ} style={{ color: '#fff' }}>Fonti {activeSources}/7</span>
+        <span className={SZ} style={{ color: '#fff' }}>Fonti {activeSources}/{sources.length}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
         <span className={SZ} style={{ color: '#fff' }}>Dati {totalDataPoints}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
@@ -94,6 +103,20 @@ export default function TopBar() {
 
       {/* Right — Status */}
       <div className="flex items-center gap-2">
+        <button onClick={toggleMute} className="flex items-center justify-center h-5 w-5 rounded transition-colors hover:bg-white/10"
+          title={muted ? 'Attiva suoni' : 'Disattiva suoni'}>
+          {muted ? (
+            <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round">
+              <path d="M8 2L4 5.5H1.5v5H4L8 14V2z" fill="rgba(255,255,255,0.1)"/>
+              <path d="M10.5 5.5l4 5M14.5 5.5l-4 5"/>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round">
+              <path d="M8 2L4 5.5H1.5v5H4L8 14V2z" fill="rgba(255,255,255,0.1)"/>
+              <path d="M11 5.5c.7.8 1 1.7 1 2.5s-.3 1.7-1 2.5M13 3.5c1.2 1.3 1.8 2.9 1.8 4.5S14.2 11.2 13 12.5"/>
+            </svg>
+          )}
+        </button>
         <span className="hidden md:inline text-[9px] font-mono font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>AES-256</span>
         <div className="relative flex h-2.5 w-2.5">
           <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-glow-breathe" style={{ background: errorSources > 0 ? '#f59e0b' : 'var(--cyan-500)' }} />

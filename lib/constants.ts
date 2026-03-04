@@ -64,6 +64,7 @@ export const MODULES: ModuleConfig[] = [
   { id: 'mobility', label: 'Viabilità', description: 'Traffico e trasporti live', icon: 'mobility' },
   { id: 'cyber', label: 'Stato Servizi', description: 'Servizi Italia in tempo reale', icon: 'cyber' },
   { id: 'livecams', label: 'Live Cams', description: 'Webcam e dirette', icon: 'livecams' },
+  { id: 'seismic', label: 'Sismografo', description: 'Terremoti Italia INGV', icon: 'seismic' },
 ];
 
 export const WMO_CODES: Record<number, string> = {
@@ -96,6 +97,12 @@ export const SOURCE_FAVICONS: Record<string, string> = {
   'Rai News': 'https://www.rainews.it/favicon.ico',
   'La Stampa': 'https://www.lastampa.it/favicon.ico',
   'Il Messaggero': 'https://www.ilmessaggero.it/favicon.ico',
+  Reuters: 'https://www.reuters.com/favicon.ico',
+  NYT: 'https://www.nytimes.com/favicon.ico',
+  BBC: 'https://www.bbc.co.uk/favicon.ico',
+  CNN: 'https://www.cnn.com/favicon.ico',
+  Guardian: 'https://www.theguardian.com/favicon.ico',
+  WashPost: 'https://www.washingtonpost.com/favicon.ico',
   X: 'https://abs.twimg.com/favicons/twitter.3.ico',
   Twitter: 'https://abs.twimg.com/favicons/twitter.3.ico',
   Telegram: 'https://telegram.org/favicon.ico',

@@ -3,6 +3,10 @@
 // ============================================================
 
 let ctx: AudioContext | null = null;
+let _muted = false;
+
+export function isMuted(): boolean { return _muted; }
+export function setMuted(m: boolean) { _muted = m; }
 
 function getCtx(): AudioContext {
   if (!ctx) ctx = new AudioContext();
@@ -11,6 +15,7 @@ function getCtx(): AudioContext {
 }
 
 function beep(freq: number, dur: number, vol = 0.08, type: OscillatorType = 'sine') {
+  if (_muted) return;
   try {
     const c = getCtx();
     const o = c.createOscillator();

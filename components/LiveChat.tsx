@@ -5,17 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import type { ChatMessage } from '@/types';
 
+// Profanity / hate speech filter (Italian + English)
+const BANNED_WORDS = /\b(cazzo|minchia|stronzo|stronza|vaffanculo|merda|puttana|troia|figa|coglione|porco\s*dio|dio\s*cane|madonna|negro|negr[oa]|frocio|ricchione|handicappato|mongolo|ritardato|fuck|shit|bitch|nigger|faggot|retard|whore|slut|cunt|bastard|asshole|dick|pussy)\b/i;
+
+function containsBannedWords(text: string): boolean {
+  return BANNED_WORDS.test(text);
+}
+
 export default function LiveChat() {
   const open = useStore((s) => s.chatOpen);
   const setOpen = useStore((s) => s.setChatOpen);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'sys-1', nickname: 'Sistema', avatar: 'S', message: 'Benvenuti nella live chat di Italy Pulse. Registrati per partecipare.', timestamp: new Date().toISOString(), location: 'Server' },
+    { id: 'sys-1', nickname: 'Sistema', avatar: 'S', message: 'Benvenuti nella live chat di Italy Pulse. Scegli un nickname per partecipare.', timestamp: new Date().toISOString(), location: 'Server' },
   ]);
   const [input, setInput] = useState('');
-  const [profile, setProfile] = useState<{ nickname: string; email: string; avatar: string } | null>(null);
-  const [regStep, setRegStep] = useState<'nickname' | 'email' | 'done'>('nickname');
+  const [profile, setProfile] = useState<{ nickname: string; avatar: string } | null>(null);
   const [regNick, setRegNick] = useState('');
-  const [regEmail, setRegEmail] = useState('');
   const [regError, setRegError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -24,21 +29,32 @@ export default function LiveChat() {
   }, [messages, open]);
 
   const completeRegistration = useCallback(() => {
-    if (!regEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { setRegError('Email non valida'); return; }
-    setProfile({ nickname: regNick, email: regEmail, avatar: regNick.charAt(0).toUpperCase() });
-    setRegStep('done');
+    const nick = regNick.trim();
+    if (nick.length < 3) { setRegError('Min. 3 caratteri'); return; }
+    if (nick.length > 20) { setRegError('Max. 20 caratteri'); return; }
+    if (containsBannedWords(nick)) { setRegError('Nickname non consentito'); return; }
+    setProfile({ nickname: nick, avatar: nick.charAt(0).toUpperCase() });
     setRegError('');
     setMessages((prev) => [...prev, {
       id: `join-${Date.now()}`, nickname: 'Sistema', avatar: 'S',
-      message: `${regNick} si è unito alla chat.`, timestamp: new Date().toISOString(), location: 'Server',
+      message: `${nick} si è unito alla chat.`, timestamp: new Date().toISOString(), location: 'Server',
     }]);
-  }, [regNick, regEmail]);
+  }, [regNick]);
 
   const send = useCallback(() => {
     if (!input.trim() || !profile) return;
+    const text = input.trim();
+    if (containsBannedWords(text)) {
+      setMessages((prev) => [...prev, {
+        id: `warn-${Date.now()}`, nickname: 'Sistema', avatar: 'S',
+        message: 'Messaggio bloccato: contenuto non appropriato.', timestamp: new Date().toISOString(), location: 'Server',
+      }]);
+      setInput('');
+      return;
+    }
     setMessages((prev) => [...prev.slice(-50), {
       id: `user-${Date.now()}`, nickname: profile.nickname, avatar: profile.avatar,
-      message: input.trim(), timestamp: new Date().toISOString(), location: 'Italia',
+      message: text, timestamp: new Date().toISOString(), location: 'Italia',
     }]);
     setInput('');
   }, [input, profile]);
@@ -65,35 +81,28 @@ export default function LiveChat() {
             transition={{ duration: 0.25 }} className="overflow-hidden flex flex-col">
 
             {!profile ? (
-              /* Registration form */
+              /* Registration — nickname only */
               <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
-                <span className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>Registrati per chattare</span>
-                {regStep === 'nickname' ? (
-                  <div className="w-full max-w-[240px] space-y-2">
-                    <input value={regNick} onChange={(e) => setRegNick(e.target.value)} placeholder="Scegli un nickname..."
-                      className="w-full rounded-lg px-3 py-2 text-[11px] outline-none" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-dim)' }} />
-                    <button onClick={() => { if (regNick.trim().length < 3) { setRegError('Min. 3 caratteri'); return; } setRegError(''); setRegStep('email'); }}
-                      className="w-full rounded-lg py-2 text-[11px] font-semibold" style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-medium)' }}>
-                      Continua
-                    </button>
-                  </div>
-                ) : (
-                  <div className="w-full max-w-[240px] space-y-2">
-                    <div className="flex items-center gap-2 mb-1">
+                <span className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>Scegli un nickname</span>
+                <div className="w-full max-w-[240px] space-y-2">
+                  {regNick.trim().length >= 3 && (
+                    <div className="flex items-center gap-2 mb-1 justify-center">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full text-[14px] font-bold"
                         style={{ background: `${avatarColor(regNick)}20`, color: avatarColor(regNick) }}>
                         {regNick.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-[11px] font-semibold" style={{ color: '#fff' }}>{regNick}</span>
                     </div>
-                    <input value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="Email di verifica..."
-                      type="email" className="w-full rounded-lg px-3 py-2 text-[11px] outline-none" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-dim)' }} />
-                    <button onClick={completeRegistration}
-                      className="w-full rounded-lg py-2 text-[11px] font-semibold" style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-medium)' }}>
-                      Entra in chat
-                    </button>
-                  </div>
-                )}
+                  )}
+                  <input value={regNick} onChange={(e) => setRegNick(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && completeRegistration()}
+                    placeholder="Il tuo nickname..."
+                    className="w-full rounded-lg px-3 py-2 text-[11px] outline-none" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-dim)' }} />
+                  <button onClick={completeRegistration}
+                    className="w-full rounded-lg py-2 text-[11px] font-semibold" style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-medium)' }}>
+                    Entra in chat
+                  </button>
+                </div>
                 {regError && <span className="text-[10px]" style={{ color: '#E76A6E' }}>{regError}</span>}
               </div>
             ) : (

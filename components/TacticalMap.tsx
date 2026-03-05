@@ -48,6 +48,7 @@ export default function TacticalMap() {
   const cyber = useStore((s) => s.cyber.data);
   const naval = useStore((s) => s.naval.data);
   const satellites = useStore((s) => s.satellites.data);
+  const seismic = useStore((s) => s.seismic.data);
   const mapLayers = useStore((s) => s.mapLayers);
   const toggleMapLayer = useStore((s) => s.toggleMapLayer);
   const shaderSettings = useStore((s) => s.shaderSettings);
@@ -233,6 +234,30 @@ export default function TacticalMap() {
       });
     }
 
+    // Seismic events (always shown)
+    seismic.forEach((eq) => {
+      const id = `eq-${eq.id}`;
+      activeIds.add(id);
+      const existing = persistentRef.current.get(id);
+      if (existing) {
+        existing.marker.setLngLat([eq.longitude, eq.latitude]);
+      } else {
+        const magColor = eq.magnitude >= 4.0 ? '#E76A6E' : eq.magnitude >= 2.5 ? '#EC9A3C' : '#32A467';
+        const size = Math.max(10, Math.min(26, eq.magnitude * 5));
+        const el = document.createElement('div');
+        el.innerHTML = `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${magColor}30;border:1.5px solid ${magColor};display:flex;align-items:center;justify-content:center;animation:pulse 2s infinite;"><span style="font-size:8px;font-weight:700;color:${magColor};font-family:monospace;">${eq.magnitude.toFixed(1)}</span></div>`;
+        el.style.cssText = 'cursor:pointer;';
+        el.addEventListener('click', () => sounds.alert());
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([eq.longitude, eq.latitude])
+          .setPopup(new maplibregl.Popup({ offset: 10, maxWidth: '280px' }).setHTML(
+            popupHtml(magColor, `M${eq.magnitude.toFixed(1)} ${eq.magnitudeType}`, eq.place, `Prof: ${eq.depth.toFixed(0)}km | ${new Date(eq.time).toLocaleString('it-IT')}`)
+          )).addTo(map);
+        persistentRef.current.set(id, { marker, el });
+      }
+      count++;
+    });
+
     // Remove stale markers (no longer in data or layer disabled)
     persistentRef.current.forEach((pm, id) => {
       if (!activeIds.has(id)) {
@@ -243,7 +268,7 @@ export default function TacticalMap() {
 
     setMarkerCount(count);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flights, cyber, naval, satellites, selectedMarkerId, mapLayers]);
+  }, [flights, cyber, naval, satellites, seismic, selectedMarkerId, mapLayers]);
 
   useEffect(() => { updateMarkers(); }, [updateMarkers]);
 

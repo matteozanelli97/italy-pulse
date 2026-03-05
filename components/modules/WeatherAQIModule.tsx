@@ -18,6 +18,8 @@ export default function WeatherAQIModule() {
   const [searchResults, setSearchResults] = useState<WeatherData[]>([]);
   const [searching, setSearching] = useState(false);
   const [pinnedCities, setPinnedCities] = useState<Set<string>>(() => new Set());
+  // Store the actual weather data for pinned cities so they persist even after clearing search
+  const [pinnedWeatherData, setPinnedWeatherData] = useState<Map<string, WeatherData>>(() => new Map());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filtered = useMemo(() => {
@@ -49,10 +51,32 @@ export default function WeatherAQIModule() {
     }, 500);
   }, [cities, doSearch]);
 
-  const togglePin = useCallback((city: string) => {
+  // Find weather data for a city from any source
+  const findWeatherData = useCallback((cityName: string): WeatherData | undefined => {
+    // Check default cities first (they get updated by polling)
+    const fromCities = cities.find((w) => w.city === cityName);
+    if (fromCities) return fromCities;
+    // Check search results
+    const fromSearch = searchResults.find((w) => w.city === cityName);
+    if (fromSearch) return fromSearch;
+    // Fall back to stored pinned data
+    return pinnedWeatherData.get(cityName);
+  }, [cities, searchResults, pinnedWeatherData]);
+
+  const togglePin = useCallback((city: string, weatherData?: WeatherData) => {
     setPinnedCities((prev) => {
       const next = new Set(prev);
-      if (next.has(city)) next.delete(city); else next.add(city);
+      if (next.has(city)) {
+        next.delete(city);
+        // Clean up stored data
+        setPinnedWeatherData((m) => { const n = new Map(m); n.delete(city); return n; });
+      } else {
+        next.add(city);
+        // Store the weather data so it persists
+        if (weatherData) {
+          setPinnedWeatherData((m) => new Map(m).set(city, weatherData));
+        }
+      }
       return next;
     });
   }, []);
@@ -66,10 +90,43 @@ export default function WeatherAQIModule() {
     return [...filtered, ...extra];
   }, [filtered, searchResults]);
 
+  // Build pinned data from all available sources
   const pinnedData = useMemo(() => {
     if (pinnedCities.size === 0) return [];
-    return cities.filter((w) => pinnedCities.has(w.city));
-  }, [cities, pinnedCities]);
+    const result: WeatherData[] = [];
+    for (const cityName of pinnedCities) {
+      const data = findWeatherData(cityName);
+      if (data) result.push(data);
+    }
+    return result;
+  }, [pinnedCities, findWeatherData]);
+
+  // Periodically refresh pinned cities that aren't in the default set
+  const refreshPinnedRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshPinned = useCallback(() => {
+    if (refreshPinnedRef.current) clearTimeout(refreshPinnedRef.current);
+    refreshPinnedRef.current = setTimeout(async () => {
+      for (const cityName of pinnedCities) {
+        // Skip if already in default cities (those update via polling)
+        if (cities.some((w) => w.city === cityName)) continue;
+        // Refresh via search API
+        try {
+          const baseName = cityName.replace(/\s*\(.*?\)\s*$/, '');
+          const res = await fetch(`/api/weather/search?q=${encodeURIComponent(baseName)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const match = (data.cities ?? []).find((w: WeatherData) => w.city === cityName);
+            if (match) {
+              setPinnedWeatherData((m) => new Map(m).set(cityName, match));
+            }
+          }
+        } catch { /* ignore */ }
+      }
+    }, 300_000); // refresh every 5 minutes
+  }, [pinnedCities, cities]);
+
+  // Trigger refresh when pinned cities change
+  useMemo(() => { if (pinnedCities.size > 0) refreshPinned(); }, [pinnedCities.size, refreshPinned]);
 
   const mainResults = useMemo(() => {
     if (pinnedCities.size === 0) return allResults;
@@ -96,12 +153,12 @@ export default function WeatherAQIModule() {
       {pinnedData.length > 0 && (
         <>
           <div className="font-mono text-[8px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--text-muted)' }}>Fissate</div>
-          {pinnedData.map((w) => <CityRow key={`pin-${w.city}`} w={w} aqi={getAqi(w.city)} expanded={expanded} setExpanded={setExpanded} flyTo={flyTo} pinned togglePin={togglePin} />)}
+          {pinnedData.map((w) => <CityRow key={`pin-${w.city}`} w={w} aqi={getAqi(w.city)} expanded={expanded} setExpanded={setExpanded} flyTo={flyTo} pinned togglePin={(city) => togglePin(city, w)} />)}
           <div className="border-b my-1" style={{ borderColor: 'var(--border-dim)' }} />
         </>
       )}
 
-      {mainResults.map((w) => <CityRow key={w.city} w={w} aqi={getAqi(w.city)} expanded={expanded} setExpanded={setExpanded} flyTo={flyTo} pinned={pinnedCities.has(w.city)} togglePin={togglePin} />)}
+      {mainResults.map((w) => <CityRow key={w.city} w={w} aqi={getAqi(w.city)} expanded={expanded} setExpanded={setExpanded} flyTo={flyTo} pinned={pinnedCities.has(w.city)} togglePin={(city) => togglePin(city, w)} />)}
       {mainResults.length === 0 && pinnedData.length === 0 && !searching && <p className="text-[11px] text-center py-2" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
       {mainResults.length === 0 && pinnedData.length === 0 && searching && <p className="text-[11px] text-center py-2 animate-pulse" style={{ color: 'var(--text-dim)' }}>Ricerca in corso...</p>}
     </div>
@@ -145,6 +202,8 @@ function CityRow({ w, aqi, expanded, setExpanded, flyTo, pinned, togglePin }: {
           <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Umidità</span><span className="font-mono" style={{ color: '#fff' }}>{w.humidity}%</span></div>
           <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Vento</span><span className="font-mono" style={{ color: '#fff' }}>{w.windSpeed.toFixed(0)} km/h ({w.windDirection}°)</span></div>
           <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Pioggia</span><span className="font-mono" style={{ color: '#fff' }}>{w.precipitation} mm</span></div>
+          {w.pressure !== undefined && <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Pressione</span><span className="font-mono" style={{ color: '#fff' }}>{w.pressure} hPa</span></div>}
+          {w.visibility !== undefined && <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Visibilità</span><span className="font-mono" style={{ color: '#fff' }}>{(w.visibility / 1000).toFixed(1)} km</span></div>}
           {aqi && (
             <>
               <div className="flex justify-between mt-1.5 pt-1.5 border-t" style={{ borderColor: 'var(--border-dim)' }}>

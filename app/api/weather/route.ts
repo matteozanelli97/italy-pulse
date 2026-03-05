@@ -9,7 +9,7 @@ export async function GET() {
     const lats = MONITORED_CITIES.map((c) => c.lat).join(',');
     const lngs = MONITORED_CITIES.map((c) => c.lng).join(',');
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation&timezone=Europe/Rome`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation,surface_pressure,uv_index,visibility,dew_point_2m&timezone=Europe/Rome`;
 
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
@@ -43,6 +43,10 @@ function mapCity(d: Record<string, unknown>, i: number): WeatherData {
     weatherDescription: WMO_CODES[code] ?? 'Sconosciuto',
     isDay: (c?.is_day ?? 1) === 1,
     precipitation: c?.precipitation ?? 0,
+    pressure: c?.surface_pressure,
+    uvIndex: c?.uv_index,
+    visibility: c?.visibility,
+    dewPoint: c?.dew_point_2m,
     alertLevel: getAlertLevel(code, c?.wind_speed_10m ?? 0),
   };
 }

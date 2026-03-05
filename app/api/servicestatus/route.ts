@@ -25,18 +25,26 @@ const SERVICES: ServiceCheck[] = [
   // Social & Cloud
   { id: 'whatsapp', name: 'WhatsApp', category: 'social', url: 'https://web.whatsapp.com', icon: 'WA' },
   { id: 'instagram', name: 'Instagram', category: 'social', url: 'https://www.instagram.com', icon: 'IG' },
+  { id: 'facebook', name: 'Facebook', category: 'social', url: 'https://www.facebook.com', icon: 'FB' },
+  { id: 'tiktok', name: 'TikTok', category: 'social', url: 'https://www.tiktok.com', icon: 'TT' },
   { id: 'google', name: 'Google IT', category: 'cloud', url: 'https://www.google.it', icon: 'G' },
   { id: 'aws', name: 'AWS eu-south-1', category: 'cloud', url: 'https://health.aws.amazon.com', icon: 'AW' },
+  { id: 'azure', name: 'Azure EU', category: 'cloud', url: 'https://azure.microsoft.com', icon: 'AZ' },
   // Transport
   { id: 'trenitalia', name: 'Trenitalia', category: 'transport', url: 'https://www.trenitalia.com', icon: 'TR' },
   { id: 'italo', name: 'Italo', category: 'transport', url: 'https://www.italotreno.it', icon: 'IT' },
   // Media
   { id: 'rai', name: 'RaiPlay', category: 'media', url: 'https://www.raiplay.it', icon: 'RA' },
   { id: 'sky', name: 'Sky Italia', category: 'media', url: 'https://www.sky.it', icon: 'SK' },
+  // Media
+  { id: 'netflix', name: 'Netflix', category: 'media', url: 'https://www.netflix.com', icon: 'NF' },
+  { id: 'prime', name: 'Prime Video', category: 'media', url: 'https://www.primevideo.com', icon: 'PV' },
   // Gov
   { id: 'spid', name: 'SPID', category: 'gov', url: 'https://www.spid.gov.it', icon: 'SP' },
   { id: 'pagopa', name: 'PagoPA', category: 'gov', url: 'https://www.pagopa.it', icon: 'PA' },
   { id: 'anpr', name: 'ANPR', category: 'gov', url: 'https://www.anagrafenazionale.interno.it', icon: 'AN' },
+  { id: 'agenzia-entrate', name: 'Agenzia Entrate', category: 'gov', url: 'https://www.agenziaentrate.gov.it', icon: 'AE' },
+  { id: 'inps', name: 'INPS', category: 'gov', url: 'https://www.inps.it', icon: 'IN' },
 ];
 
 export async function GET() {

@@ -82,13 +82,29 @@ export async function GET() {
     // Apply categorization
     const INTERNATIONAL_SOURCES = new Set(['Reuters', 'NYT', 'BBC', 'CNN', 'Guardian', 'WashPost']);
     allItems.forEach((item) => {
-      // International sources always go to World category
       if (INTERNATIONAL_SOURCES.has(item.source)) {
         item.category = 'World';
       } else {
         item.category = classifyCategory(item.title, item.description, item.category);
       }
     });
+
+    // Translate international news to Italian (batch via MyMemory API)
+    const intlItems = allItems.filter((item) => INTERNATIONAL_SOURCES.has(item.source));
+    if (intlItems.length > 0) {
+      const textsToTranslate = intlItems.flatMap((item) => [item.title, item.description.slice(0, 300)]);
+      try {
+        const translations = await batchTranslate(textsToTranslate);
+        if (translations.length === textsToTranslate.length) {
+          for (let i = 0; i < intlItems.length; i++) {
+            const tTitle = translations[i * 2];
+            const tDesc = translations[i * 2 + 1];
+            if (tTitle && !tTitle.includes('MYMEMORY')) intlItems[i].title = tTitle;
+            if (tDesc && !tDesc.includes('MYMEMORY')) intlItems[i].description = tDesc;
+          }
+        }
+      } catch { /* keep originals if translation fails */ }
+    }
 
     // Detect breaking news
     allItems.forEach((item) => {
@@ -190,6 +206,25 @@ function extractTag(block: string, tag: string): string {
   const simpleRegex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`);
   const simpleMatch = simpleRegex.exec(block);
   return simpleMatch ? simpleMatch[1].trim() : '';
+}
+
+async function batchTranslate(texts: string[]): Promise<string[]> {
+  // MyMemory free API: translate one at a time (rate-limited but no key needed)
+  const results: string[] = [];
+  for (const text of texts) {
+    if (!text || text.length < 3) { results.push(text); continue; }
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=en|it`;
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) { results.push(text); continue; }
+      const data = await res.json();
+      const t = data?.responseData?.translatedText;
+      results.push(t && !t.includes('MYMEMORY WARNING') ? t : text);
+    } catch {
+      results.push(text);
+    }
+  }
+  return results;
 }
 
 function cleanHtml(str: string): string {

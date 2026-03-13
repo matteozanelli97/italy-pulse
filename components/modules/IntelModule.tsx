@@ -29,7 +29,7 @@ export default function IntelModule({ search }: { search: string }) {
           </p>
         </a>
       ))}
-      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
+      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>No results</p>}
     </div>
   );
 }
@@ -48,7 +48,7 @@ function Init() {
   return (
     <div className="flex items-center gap-2 py-2">
       <div className="h-2 w-2 rounded-full animate-glow-breathe" style={{ background: 'var(--blue-500)' }} />
-      <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>Caricamento intel<span className="init-dots" /></span>
+      <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>Loading intel<span className="init-dots" /></span>
     </div>
   );
 }

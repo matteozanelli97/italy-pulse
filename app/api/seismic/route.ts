@@ -14,19 +14,14 @@ interface SeismicEvent {
   region: string;
 }
 
+// USGS global earthquake feed — M2.5+ in the past week
+const USGS_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson';
+
 export async function GET() {
   try {
-    // INGV (Istituto Nazionale di Geofisica e Vulcanologia) — real Italian seismic data
-    // Fetch last 50 events from the past 7 days
-    const endTime = new Date().toISOString().split('.')[0];
-    const startDate = new Date(Date.now() - 7 * 86400000);
-    const startTime = startDate.toISOString().split('.')[0];
-
-    const url = `https://webservices.ingv.it/fdsnws/event/1/query?starttime=${startTime}&endtime=${endTime}&minmag=1.5&format=geojson&orderby=time&limit=50`;
-
-    const res = await fetch(url, {
+    const res = await fetch(USGS_URL, {
       next: { revalidate: 120 },
-      headers: { 'User-Agent': 'ItalyPulse/1.0' },
+      headers: { 'User-Agent': 'Pulse/1.0' },
     });
 
     if (!res.ok) {
@@ -41,9 +36,9 @@ export async function GET() {
       longitude: f.geometry.coordinates[0],
       depth: f.geometry.coordinates[2] || 0,
       magnitude: f.properties.mag as number,
-      magnitudeType: (f.properties.magType as string) || 'ML',
-      place: (f.properties.place as string) || 'Italia',
-      region: (f.properties.place as string)?.replace(/^\d+\s*km\s+\w+\s+/, '') || 'Italia',
+      magnitudeType: (f.properties.magType as string) || 'ml',
+      place: (f.properties.place as string) || 'Unknown',
+      region: (f.properties.place as string)?.replace(/^\d+\s*km\s+\w+\s+of\s+/, '') || 'Unknown',
     }));
 
     return NextResponse.json({ events, updatedAt: new Date().toISOString() });

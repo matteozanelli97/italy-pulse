@@ -16,7 +16,7 @@ export default function AirQualityModule({ search }: { search: string }) {
     return s.name.toLowerCase().includes(search.toLowerCase()) || s.dominantPollutant.toLowerCase().includes(search.toLowerCase());
   });
 
-  if (stations.length === 0) return <Init label="Caricamento stazioni AQI" />;
+  if (stations.length === 0) return <Init label="Loading AQI stations" />;
 
   return (
     <div className="space-y-1">

@@ -34,7 +34,7 @@ function Init() {
   return (
     <div className="flex items-center gap-2 py-2">
       <div className="h-2 w-2 rounded-full animate-glow-breathe" style={{ background: 'var(--blue-500)' }} />
-      <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>Caricamento dati energia<span className="init-dots" /></span>
+      <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>Loading energy data<span className="init-dots" /></span>
     </div>
   );
 }

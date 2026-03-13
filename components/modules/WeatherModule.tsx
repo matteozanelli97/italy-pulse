@@ -27,7 +27,7 @@ export default function WeatherModule({ search }: { search: string }) {
           </div>
         </button>
       ))}
-      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
+      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>No results</p>}
     </div>
   );
 }

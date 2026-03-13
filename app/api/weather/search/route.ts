@@ -4,7 +4,7 @@ import type { WeatherData } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-// Search any Italian city via Open-Meteo geocoding + weather
+// Search any city worldwide via Open-Meteo geocoding + weather
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim();
@@ -15,24 +15,24 @@ export async function GET(request: NextRequest) {
   try {
     // Geocode the city
     const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=it&format=json`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=en&format=json`,
       { next: { revalidate: 3600 } }
     );
     if (!geoRes.ok) throw new Error(`Geocoding ${geoRes.status}`);
     const geoData = await geoRes.json();
     const results = (geoData.results ?? []) as Array<{ name: string; latitude: number; longitude: number; country_code: string; admin1?: string }>;
 
-    // Filter to Italian results
-    const italian = results.filter((r) => r.country_code === 'IT');
-    if (italian.length === 0) {
+    // Use all results (global)
+    const matched = results.slice(0, 5);
+    if (matched.length === 0) {
       return NextResponse.json({ cities: [] });
     }
 
     // Fetch weather for each match
-    const lats = italian.map((r) => r.latitude).join(',');
-    const lngs = italian.map((r) => r.longitude).join(',');
+    const lats = matched.map((r) => r.latitude).join(',');
+    const lngs = matched.map((r) => r.longitude).join(',');
     const wxRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation&timezone=Europe/Rome`,
+      `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation,surface_pressure,uv_index,visibility,dew_point_2m&timezone=auto`,
       { next: { revalidate: 300 } }
     );
     if (!wxRes.ok) throw new Error(`Weather ${wxRes.status}`);
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       const c = d.current as Record<string, number>;
       const code = c?.weather_code ?? 0;
       const wind = c?.wind_speed_10m ?? 0;
-      const loc = italian[i];
+      const loc = matched[i];
       return {
         city: loc?.admin1 ? `${loc.name} (${loc.admin1})` : loc?.name ?? q,
         latitude: loc?.latitude ?? 0,
@@ -54,9 +54,13 @@ export async function GET(request: NextRequest) {
         windSpeed: wind,
         windDirection: c?.wind_direction_10m ?? 0,
         weatherCode: code,
-        weatherDescription: WMO_CODES[code] ?? 'Sconosciuto',
+        weatherDescription: WMO_CODES[code] ?? 'Unknown',
         isDay: (c?.is_day ?? 1) === 1,
         precipitation: c?.precipitation ?? 0,
+        pressure: c?.surface_pressure,
+        uvIndex: c?.uv_index,
+        visibility: c?.visibility,
+        dewPoint: c?.dew_point_2m,
         alertLevel: code >= 95 || wind > 80 ? 'warning' : code >= 80 || wind > 60 ? 'watch' : code >= 61 || wind > 40 ? 'advisory' : 'none',
       };
     });

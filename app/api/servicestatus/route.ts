@@ -11,32 +11,38 @@ interface ServiceCheck {
 }
 
 const SERVICES: ServiceCheck[] = [
-  // Telecomunicazioni
-  { id: 'tim', name: 'TIM', category: 'telecom', url: 'https://www.tim.it', icon: 'T' },
-  { id: 'vodafone', name: 'Vodafone IT', category: 'telecom', url: 'https://www.vodafone.it', icon: 'V' },
-  { id: 'wind3', name: 'WindTre', category: 'telecom', url: 'https://www.windtre.it', icon: 'W' },
-  { id: 'iliad', name: 'Iliad', category: 'telecom', url: 'https://www.iliad.it', icon: 'I' },
-  { id: 'fastweb', name: 'Fastweb', category: 'telecom', url: 'https://www.fastweb.it', icon: 'F' },
+  // Telecom
+  { id: 'att', name: 'AT&T', category: 'telecom', url: 'https://www.att.com', icon: 'AT' },
+  { id: 'verizon', name: 'Verizon', category: 'telecom', url: 'https://www.verizon.com', icon: 'VZ' },
+  { id: 'vodafone', name: 'Vodafone', category: 'telecom', url: 'https://www.vodafone.com', icon: 'V' },
+  { id: 'tmobile', name: 'T-Mobile', category: 'telecom', url: 'https://www.t-mobile.com', icon: 'TM' },
   // Banking
-  { id: 'intesa', name: 'Intesa Sanpaolo', category: 'banking', url: 'https://www.intesasanpaolo.com', icon: 'IS' },
-  { id: 'unicredit', name: 'UniCredit', category: 'banking', url: 'https://www.unicredit.it', icon: 'UC' },
-  { id: 'poste', name: 'Poste Italiane', category: 'banking', url: 'https://www.poste.it', icon: 'PI' },
-  { id: 'nexi', name: 'Nexi', category: 'banking', url: 'https://www.nexi.it', icon: 'NX' },
-  // Social & Cloud
+  { id: 'chase', name: 'Chase', category: 'banking', url: 'https://www.chase.com', icon: 'CH' },
+  { id: 'hsbc', name: 'HSBC', category: 'banking', url: 'https://www.hsbc.com', icon: 'HS' },
+  { id: 'paypal', name: 'PayPal', category: 'banking', url: 'https://www.paypal.com', icon: 'PP' },
+  { id: 'stripe', name: 'Stripe', category: 'banking', url: 'https://www.stripe.com', icon: 'ST' },
+  // Social
   { id: 'whatsapp', name: 'WhatsApp', category: 'social', url: 'https://web.whatsapp.com', icon: 'WA' },
   { id: 'instagram', name: 'Instagram', category: 'social', url: 'https://www.instagram.com', icon: 'IG' },
-  { id: 'google', name: 'Google IT', category: 'cloud', url: 'https://www.google.it', icon: 'G' },
-  { id: 'aws', name: 'AWS eu-south-1', category: 'cloud', url: 'https://health.aws.amazon.com', icon: 'AW' },
+  { id: 'facebook', name: 'Facebook', category: 'social', url: 'https://www.facebook.com', icon: 'FB' },
+  { id: 'tiktok', name: 'TikTok', category: 'social', url: 'https://www.tiktok.com', icon: 'TT' },
+  { id: 'x', name: 'X (Twitter)', category: 'social', url: 'https://www.x.com', icon: 'X' },
+  // Cloud & Tech
+  { id: 'google', name: 'Google', category: 'cloud', url: 'https://www.google.com', icon: 'G' },
+  { id: 'aws', name: 'AWS', category: 'cloud', url: 'https://health.aws.amazon.com', icon: 'AW' },
+  { id: 'azure', name: 'Microsoft Azure', category: 'cloud', url: 'https://azure.microsoft.com', icon: 'AZ' },
+  { id: 'cloudflare', name: 'Cloudflare', category: 'cloud', url: 'https://www.cloudflare.com', icon: 'CF' },
   // Transport
-  { id: 'trenitalia', name: 'Trenitalia', category: 'transport', url: 'https://www.trenitalia.com', icon: 'TR' },
-  { id: 'italo', name: 'Italo', category: 'transport', url: 'https://www.italotreno.it', icon: 'IT' },
+  { id: 'uber', name: 'Uber', category: 'transport', url: 'https://www.uber.com', icon: 'UB' },
+  { id: 'flightradar', name: 'FlightRadar24', category: 'transport', url: 'https://www.flightradar24.com', icon: 'FR' },
   // Media
-  { id: 'rai', name: 'RaiPlay', category: 'media', url: 'https://www.raiplay.it', icon: 'RA' },
-  { id: 'sky', name: 'Sky Italia', category: 'media', url: 'https://www.sky.it', icon: 'SK' },
+  { id: 'netflix', name: 'Netflix', category: 'media', url: 'https://www.netflix.com', icon: 'NF' },
+  { id: 'youtube', name: 'YouTube', category: 'media', url: 'https://www.youtube.com', icon: 'YT' },
+  { id: 'spotify', name: 'Spotify', category: 'media', url: 'https://www.spotify.com', icon: 'SP' },
+  { id: 'prime', name: 'Prime Video', category: 'media', url: 'https://www.primevideo.com', icon: 'PV' },
   // Gov
-  { id: 'spid', name: 'SPID', category: 'gov', url: 'https://www.spid.gov.it', icon: 'SP' },
-  { id: 'pagopa', name: 'PagoPA', category: 'gov', url: 'https://www.pagopa.it', icon: 'PA' },
-  { id: 'anpr', name: 'ANPR', category: 'gov', url: 'https://www.anagrafenazionale.interno.it', icon: 'AN' },
+  { id: 'usagov', name: 'USA.gov', category: 'gov', url: 'https://www.usa.gov', icon: 'US' },
+  { id: 'govuk', name: 'GOV.UK', category: 'gov', url: 'https://www.gov.uk', icon: 'UK' },
 ];
 
 export async function GET() {
@@ -50,7 +56,7 @@ export async function GET() {
           method: 'HEAD',
           signal: controller.signal,
           redirect: 'follow',
-          headers: { 'User-Agent': 'ItalyPulse/1.0 StatusCheck' },
+          headers: { 'User-Agent': 'Pulse/1.0 StatusCheck' },
         });
         clearTimeout(timeout);
         const latency = Date.now() - t0;

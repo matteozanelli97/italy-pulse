@@ -1,5 +1,5 @@
 // ============================================================
-// ITALY PULSE — Zustand Global State Store
+// PULSE — Zustand Global State Store
 // ============================================================
 
 import { create } from 'zustand';
@@ -32,7 +32,7 @@ export interface AppStore {
   selectMarker: (id: string | null, type?: string | null) => void;
   clearFlyTo: () => void;
 
-  // Data sources (no seismic)
+  // Data sources
   weather: SourceSlice<WeatherData>;
   markets: SourceSlice<MarketTick>;
   news: SourceSlice<NewsItem>;
@@ -47,36 +47,32 @@ export interface AppStore {
   serviceStatus: SourceSlice<ServiceStatus>;
   seismic: SourceSlice<SeismicEvent>;
 
-  // Custom weather search results
+  // Weather search
   searchedWeather: WeatherData[];
   setSearchedWeather: (data: WeatherData[]) => void;
 
   // UI
   searchQuery: string;
-  chatOpen: boolean;
-  marketRegion: 'IT' | 'US';
+  marketRegion: 'US' | 'EU' | 'ASIA' | 'IT';
   mapLayers: { flights: boolean; naval: boolean; cyber: boolean; satellites: boolean; traffic: boolean };
   shaderSettings: ShaderSettings;
 
-  // Module visibility (sidebar toggles)
+  // Module visibility
   visibleModules: Record<ModuleId, boolean>;
   toggleModule: (id: ModuleId) => void;
 
-  // Webcam preview (up to 3 docked below map)
+  // Webcam preview
   openWebcams: LiveCam[];
   openWebcam: (cam: LiveCam) => void;
   closeWebcam: (id: string) => void;
 
-  // Article modal
-  articleUrl: string | null;
-  articleTitle: string | null;
-  openArticle: (url: string, title: string) => void;
-  closeArticle: () => void;
+  // Chat
+  chatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
 
   // Actions
   setSearchQuery: (q: string) => void;
-  setChatOpen: (open: boolean) => void;
-  setMarketRegion: (r: 'IT' | 'US') => void;
+  setMarketRegion: (r: 'US' | 'EU' | 'ASIA' | 'IT') => void;
   toggleMapLayer: (layer: keyof AppStore['mapLayers']) => void;
   setShaderMode: (mode: ShaderMode) => void;
   setShaderSetting: (key: keyof Omit<ShaderSettings, 'mode'>, value: number) => void;
@@ -119,12 +115,11 @@ export const useStore = create<AppStore>((set, get) => ({
   setSearchedWeather: (data) => set({ searchedWeather: data }),
 
   searchQuery: '',
-  chatOpen: false,
-  marketRegion: 'IT',
+  marketRegion: 'US',
   mapLayers: { flights: true, naval: true, cyber: true, satellites: false, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  visibleModules: { markets: true, weatherAqi: true, mobility: true, cyber: true, livecams: true, seismic: true },
+  visibleModules: { markets: true, weather: true, seismic: true, services: true, livecams: true, flights: true },
   toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
 
   openWebcams: [],
@@ -135,13 +130,10 @@ export const useStore = create<AppStore>((set, get) => ({
   }),
   closeWebcam: (id) => set((s) => ({ openWebcams: s.openWebcams.filter((w) => w.id !== id) })),
 
-  articleUrl: null,
-  articleTitle: null,
-  openArticle: (url, title) => set({ articleUrl: url, articleTitle: title }),
-  closeArticle: () => set({ articleUrl: null, articleTitle: null }),
+  chatOpen: false,
+  setChatOpen: (open) => set({ chatOpen: open }),
 
   setSearchQuery: (q) => set({ searchQuery: q }),
-  setChatOpen: (open) => set({ chatOpen: open }),
   setMarketRegion: (r) => set({ marketRegion: r }),
   toggleMapLayer: (layer) =>
     set((s) => ({ mapLayers: { ...s.mapLayers, [layer]: !s.mapLayers[layer] } })),
@@ -185,7 +177,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
     const now = () => new Date().toISOString();
 
-    // Real flights via OpenSky
+    // Global flights via OpenSky (every 15s)
     const pollFlights = async () => {
       try {
         const d = await apiFetch('flights');
@@ -197,7 +189,7 @@ export const useStore = create<AppStore>((set, get) => ({
     pollFlights();
     timers.push(setInterval(pollFlights, 15_000));
 
-    // Satellites
+    // Global satellites via CelesTrak (every 30s)
     const pollSatellites = async () => {
       try {
         const d = await apiFetch('satellites');
@@ -209,14 +201,14 @@ export const useStore = create<AppStore>((set, get) => ({
     pollSatellites();
     timers.push(setInterval(pollSatellites, POLL_SATELLITES));
 
-    // Mock sources (cyber, naval)
-    const genCyber = () => set({ cyber: { data: generateCyberThreats(12), loading: false, lastUpdate: now(), error: false } });
-    const genNaval = () => set({ naval: { data: generateNavalTracks(14), loading: false, lastUpdate: now(), error: false } });
+    // Simulated sources (cyber, naval)
+    const genCyber = () => set({ cyber: { data: generateCyberThreats(20), loading: false, lastUpdate: now(), error: false } });
+    const genNaval = () => set({ naval: { data: generateNavalTracks(20), loading: false, lastUpdate: now(), error: false } });
     genCyber(); genNaval();
     timers.push(setInterval(genCyber, 30_000));
     timers.push(setInterval(genNaval, 20_000));
 
-    // Live cams (static data, loaded once)
+    // Live cams (loaded once)
     (async () => {
       try {
         const d = await apiFetch('livecams');
@@ -226,7 +218,7 @@ export const useStore = create<AppStore>((set, get) => ({
       }
     })();
 
-    // Seismic data from INGV (every 120s)
+    // Global seismic data from USGS (every 120s)
     const pollSeismic = async () => {
       try {
         const d = await apiFetch('seismic');
@@ -238,7 +230,7 @@ export const useStore = create<AppStore>((set, get) => ({
     pollSeismic();
     timers.push(setInterval(pollSeismic, 120_000));
 
-    // Service status (real-time checks every 60s)
+    // Service status (every 60s)
     const pollServiceStatus = async () => {
       try {
         const d = await apiFetch('servicestatus');

@@ -63,7 +63,7 @@ export default function MarketsModule() {
               color: region === r ? 'var(--accent)' : 'var(--text-dim)',
               border: `1px solid ${region === r ? 'var(--border-medium)' : 'var(--border-dim)'}`,
             }}>
-            {r === 'IT' ? 'Italia' : 'USA'}
+            {r === 'IT' ? 'EU' : 'USA'}
           </button>
         ))}
         <span className="flex-1" />

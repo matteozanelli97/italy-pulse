@@ -5,14 +5,14 @@ import { useStore } from '@/lib/store';
 import type { ServiceStatus } from '@/types';
 
 const STATUS_CFG = {
-  operational: { color: '#32A467', label: 'Operativo', dot: '#32A467' },
-  degraded: { color: '#EC9A3C', label: 'Rallentato', dot: '#EC9A3C' },
-  down: { color: '#E76A6E', label: 'Non disponibile', dot: '#E76A6E' },
+  operational: { color: '#32A467', label: 'Operational', dot: '#32A467' },
+  degraded: { color: '#EC9A3C', label: 'Degraded', dot: '#EC9A3C' },
+  down: { color: '#E76A6E', label: 'Down', dot: '#E76A6E' },
 } as const;
 
 const CAT_LABELS: Record<string, string> = {
-  telecom: 'Telecomunicazioni', banking: 'Banche', social: 'Social Media',
-  cloud: 'Cloud & Tech', transport: 'Trasporti', media: 'Streaming', gov: 'Pubblica Amministrazione',
+  telecom: 'Telecom', banking: 'Banking', social: 'Social Media',
+  cloud: 'Cloud & Tech', transport: 'Transport', media: 'Streaming', gov: 'Government',
 };
 
 type CatId = ServiceStatus['category'];
@@ -44,11 +44,11 @@ export default function CyberModule() {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full" style={{ background: totalIssues > 0 ? '#E76A6E' : '#32A467' }} />
             <span className="text-[10px] font-bold" style={{ color: totalIssues > 0 ? '#E76A6E' : '#32A467' }}>
-              {totalIssues > 0 ? `${totalIssues} problemi rilevati` : 'Tutti i servizi operativi'}
+              {totalIssues > 0 ? `${totalIssues} issues detected` : 'All services operational'}
             </span>
             <span className="flex-1" />
             <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>
-              {lastUpdate ? new Date(lastUpdate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : ''}
+              {lastUpdate ? new Date(lastUpdate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
             </span>
           </div>
         </div>
@@ -80,8 +80,8 @@ export default function CyberModule() {
                     </div>
                     {isExpanded && (
                       <div className="mt-1 pt-1 border-t space-y-0.5 text-[8px] font-mono" style={{ borderColor: 'var(--border-dim)' }}>
-                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Stato</span><span style={{ color: cfg.color }}>{cfg.label}</span></div>
-                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Latenza</span><span style={{ color: svc.latency > 3000 ? '#EC9A3C' : '#fff' }}>{svc.latency}ms</span></div>
+                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Status</span><span style={{ color: cfg.color }}>{cfg.label}</span></div>
+                        <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Latency</span><span style={{ color: svc.latency > 3000 ? '#EC9A3C' : '#fff' }}>{svc.latency}ms</span></div>
                         <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>HTTP</span><span style={{ color: '#fff' }}>{svc.httpStatus || 'N/A'}</span></div>
                       </div>
                     )}
@@ -100,7 +100,7 @@ function Init() {
   return (
     <div className="flex items-center gap-2 py-2">
       <div className="h-2 w-2 rounded-full animate-glow-breathe" style={{ background: 'var(--cyan-500)' }} />
-      <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Verifica servizi Italia<span className="init-dots" /></span>
+      <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Checking global services<span className="init-dots" /></span>
     </div>
   );
 }

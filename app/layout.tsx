@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Italy Pulse — Piattaforma Analitica OSINT",
-  description: "Dashboard OSINT C4ISR in tempo reale per l'Italia.",
+  title: "PULSE — Global OSINT Command Center",
+  description: "Real-time global intelligence dashboard",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="it" className="dark">
+    <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -152,7 +152,7 @@ export interface ShaderSettings {
   bloom: number; sharpening: number;
 }
 
-export type ModuleId = 'markets' | 'weather' | 'seismic' | 'services' | 'livecams' | 'flights' | 'political';
+export type ModuleId = 'markets' | 'weather' | 'seismic' | 'services' | 'livecams' | 'flights' | 'political' | 'seriea' | 'events' | 'fuel';
 
 export interface ModuleConfig {
   id: ModuleId; label: string;

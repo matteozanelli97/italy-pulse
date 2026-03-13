@@ -119,7 +119,7 @@ export const useStore = create<AppStore>((set, get) => ({
   mapLayers: { flights: true, naval: true, cyber: true, satellites: false, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  visibleModules: { markets: true, weather: true, seismic: true, services: true, livecams: true, flights: true, political: true },
+  visibleModules: { markets: true, weather: true, seismic: true, services: true, livecams: true, flights: true, political: true, seriea: true, events: true, fuel: true },
   toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
 
   openWebcams: [],

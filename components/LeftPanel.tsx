@@ -7,13 +7,19 @@ import CyberModule from './modules/CyberModule';
 import LiveCamsModule from './modules/LiveCamsModule';
 import FlightsModule from './modules/FlightsModule';
 import PoliticalModule from './modules/PoliticalModule';
+import SerieAModule from './modules/SerieAModule';
+import EventsModule from './modules/EventsModule';
+import FuelModule from './modules/FuelModule';
 import type { ModuleId } from '@/types';
 
 const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[] = [
   { id: 'political', label: 'SONDAGGI POLITICI', Component: PoliticalModule },
+  { id: 'events', label: 'EVENTI & REFERENDUM', Component: EventsModule },
   { id: 'seismic', label: 'SISMICA (INGV)', Component: SeismicModule },
   { id: 'weather', label: 'METEO ITALIA', Component: WeatherAQIModule },
   { id: 'flights', label: 'VOLI SU ITALIA', Component: FlightsModule },
+  { id: 'seriea', label: 'SERIE A', Component: SerieAModule },
+  { id: 'fuel', label: 'CARBURANTI', Component: FuelModule },
   { id: 'markets', label: 'MERCATI / FTSE MIB', Component: MarketsModule },
   { id: 'services', label: 'SERVIZI IT', Component: CyberModule },
   { id: 'livecams', label: 'TELECAMERE', Component: LiveCamsModule },

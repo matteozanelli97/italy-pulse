@@ -70,42 +70,57 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 
 ---
 
-## Phase 3: Advanced Data Integration
-**Status: PENDING — Next session**
+## Phase 3: Advanced Data Integration ✅
+**Status: COMPLETE**
 
-### 3A — RapidAPI Data Sources
-- [ ] Idealista (Real Estate trends via RapidAPI)
-- [ ] Live fuel prices across Italy (RapidAPI)
-- [ ] Events & Crowds (Zaza81 API via RapidAPI)
-- [ ] Serie A live scores & stats (RapidAPI)
+### 3A — Serie A (API-Football via RapidAPI)
+- [x] Live scores and match results
+- [x] Classifica (standings table) with top-10
+- [x] Partite/Classifica toggle views
+- [x] Synthetic fallback when API unavailable
 
-### 3B — Institutional Open Data
-- [ ] Protezione Civile alerts
-- [ ] Dati.gov.it CKAN/DCAT integration
-- [ ] Project data onto CesiumJS map as entities
+### 3B — Fuel Prices (RapidAPI)
+- [x] Regional fuel costs (benzina, diesel, GPL, metano)
+- [x] National averages
+- [x] Bar chart by region
+- [x] Synthetic fallback
+
+### 3C — Events & Referendum Tracker
+- [x] Live countdowns for upcoming Italian events
+- [x] Quorum tracking for referendums
+- [x] Event types: referendum, elezione, sciopero, manifestazione, festività
+- [x] Color-coded event cards with descriptions
+- [x] Real events: Autonomia Differenziata, Comunali 2026, Scioperi, 25 Aprile
 
 ---
 
-## Phase 4: Socio-Political & Crisis Modules
-**Status: PENDING**
+## Phase 4: Future Enhancements
+**Status: PENDING — Future sessions**
 
-### 4A — Political Sentiment Enhancement
+### 4A — Deeper RapidAPI Integration
+- [ ] Idealista (Real Estate market trends)
+- [ ] Events & Crowds (Zaza81 API)
 - [ ] Real polling data from aggregators
 - [ ] Social media sentiment analysis
-- [ ] Historical polling trend charts
 
-### 4B — Referendum/Events Tracker
-- [ ] Live countdowns for upcoming votes
-- [ ] Quorum tracking visualization
+### 4B — Institutional Open Data
+- [ ] Protezione Civile alerts
+- [ ] Dati.gov.it CKAN/DCAT integration
+- [ ] Project institutional data onto CesiumJS map as entities
+
+### 4C — Map Data Overlays
+- [ ] Seismic events as 3D markers on CesiumJS
+- [ ] Flight tracks overlaid on 3D map
 - [ ] Regional voting trends as 3D heatmaps
-- [ ] National strike impact mapping
+- [ ] Strike impact mapping with choropleth
 
 ---
 
 ## Architecture Notes
 - **3D Engine**: CesiumJS via CDN + Google Photorealistic 3D Tiles (Cesium Ion token)
-- **Data**: RapidAPI + Italian public APIs (INGV, Protezione Civile, dati.gov.it)
-- **State**: Zustand store
+- **Data**: RapidAPI (API-Football, fuel prices) + Italian public APIs (INGV, Open-Meteo, OpenSky)
+- **State**: Zustand store with typed slices
 - **Framework**: Next.js 16 with Turbopack
 - **Styling**: Tailwind CSS 4 + Palantir Gotham theme
 - **Shaders**: CSS filter-based (CRT, NVG, FLIR) with overlay compositing
+- **Modules**: 10 data panels (Political, Events, Seismic, Weather, Flights, Serie A, Fuel, Markets, Services, Webcams)

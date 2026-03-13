@@ -620,6 +620,103 @@ const TrafficParticles = memo(function TrafficParticles({ visible }: { visible: 
   );
 });
 
+// ── CCTV Frustum Projection — camera FOV cones at webcam locations ──
+const FRUSTUM_COLOR = new THREE.Color('#00FFCC');
+const FRUSTUM_REACH = 0.12; // length of frustum cone on globe surface
+
+function CCTVFrustum({ lat, lng, heading, fov }: { lat: number; lng: number; heading: number; fov: number }) {
+  const coneRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  // Camera position on globe
+  const pos = useMemo(() => latLngToVec3(lat, lng, EARTH_RADIUS * 1.002), [lat, lng]);
+
+  // Build frustum triangle (FOV fan shape) as a custom buffer geometry
+  const frustumGeo = useMemo(() => {
+    const halfFov = (fov / 2) * DEG2RAD;
+    const hRad = heading * DEG2RAD;
+    const reach = FRUSTUM_REACH;
+
+    // Fan shape: apex at camera, two edges at FOV boundaries
+    const numSegments = 12;
+    const vertices: number[] = [];
+
+    for (let i = 0; i < numSegments; i++) {
+      const t0 = -halfFov + (i / numSegments) * fov * DEG2RAD;
+      const t1 = -halfFov + ((i + 1) / numSegments) * fov * DEG2RAD;
+      const angle0 = hRad + t0;
+      const angle1 = hRad + t1;
+
+      // Apex
+      const p0 = latLngToVec3(lat, lng, EARTH_RADIUS * 1.003);
+      // Edge points
+      const eLat0 = lat + Math.cos(angle0) * reach * 8;
+      const eLng0 = lng + Math.sin(angle0) * reach * 8 / Math.cos(lat * DEG2RAD);
+      const eLat1 = lat + Math.cos(angle1) * reach * 8;
+      const eLng1 = lng + Math.sin(angle1) * reach * 8 / Math.cos(lat * DEG2RAD);
+
+      const p1 = latLngToVec3(eLat0, eLng0, EARTH_RADIUS * 1.003);
+      const p2 = latLngToVec3(eLat1, eLng1, EARTH_RADIUS * 1.003);
+
+      vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geo.computeVertexNormals();
+    return geo;
+  }, [lat, lng, heading, fov]);
+
+  // Pulsing animation
+  useFrame(({ clock }) => {
+    if (coneRef.current) {
+      const mat = coneRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.12 + Math.sin(clock.getElapsedTime() * 2) * 0.06;
+    }
+    if (ringRef.current) {
+      const mat = ringRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.5 + Math.sin(clock.getElapsedTime() * 3) * 0.3;
+    }
+  });
+
+  return (
+    <group>
+      {/* Camera point marker */}
+      <mesh ref={ringRef} position={pos}>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.7} />
+      </mesh>
+      {/* FOV fan */}
+      <mesh ref={coneRef} geometry={frustumGeo}>
+        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+const CCTVFrustums = memo(function CCTVFrustums({ cams }: { cams: import('@/types').LiveCam[] }) {
+  const geoLocatedCams = useMemo(
+    () => cams.filter((c) => c.latitude != null && c.longitude != null && c.type === 'webcam'),
+    [cams]
+  );
+
+  if (geoLocatedCams.length === 0) return null;
+
+  return (
+    <group>
+      {geoLocatedCams.map((cam) => (
+        <CCTVFrustum
+          key={cam.id}
+          lat={cam.latitude!}
+          lng={cam.longitude!}
+          heading={cam.heading ?? 0}
+          fov={cam.fov ?? 70}
+        />
+      ))}
+    </group>
+  );
+});
+
 // ── Camera controller with flyTo animation ──
 function CameraController() {
   const { camera } = useThree();
@@ -750,6 +847,7 @@ function Scene() {
   const naval = useStore((s) => s.naval.data);
   const satellites = useStore((s) => s.satellites.data);
   const seismic = useStore((s) => s.seismic.data);
+  const livecams = useStore((s) => s.livecams.data);
   const mapLayers = useStore((s) => s.mapLayers);
 
   return (
@@ -774,6 +872,7 @@ function Scene() {
       <SeismicMarkers events={seismic} />
       <RoadCorridorLines visible={mapLayers.traffic} />
       <TrafficParticles visible={mapLayers.traffic} />
+      <CCTVFrustums cams={livecams} />
 
       {/* Camera */}
       <CameraController />
@@ -1003,6 +1102,14 @@ export default function TacticalMap() {
           <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#E76A6E', boxShadow: '0 0 6px #E76A6E' }} />
             <span style={{ color: 'var(--text-dim)' }}>Cyber</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#00FFCC', boxShadow: '0 0 6px #00FFCC' }} />
+            <span style={{ color: 'var(--text-dim)' }}>CCTV</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#FFD666', boxShadow: '0 0 6px #FFD666' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Traffic</span>
           </span>
         </div>
       </div>

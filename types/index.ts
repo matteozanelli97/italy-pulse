@@ -105,6 +105,8 @@ export interface LiveCam {
   url: string; thumbnail?: string; embedUrl?: string;
   type: 'webcam' | 'stream' | 'news';
   active?: boolean;
+  latitude?: number; longitude?: number;
+  heading?: number; fov?: number;
 }
 
 export interface ServiceStatus {

@@ -701,19 +701,23 @@ export default function TacticalMap() {
       // Ignore if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      const key = e.key;
-      if (key >= '1' && key <= '8') {
-        const idx = parseInt(key) - 1;
-        if (idx < POIS.length) {
-          const poi = POIS[idx];
-          flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom });
-          sounds.marker();
+      const key = e.key.toLowerCase();
 
-          // Show toast
-          setPoiToast(`${key}: ${poi.name}`);
-          if (toastTimeout.current) clearTimeout(toastTimeout.current);
-          toastTimeout.current = setTimeout(() => setPoiToast(null), 2000);
-        }
+      // Q/W/E/R shortcuts for first 4 POIs, 1-8 for all 8
+      const qwerMap: Record<string, number> = { q: 0, w: 1, e: 2, r: 3 };
+      let idx = -1;
+      if (key in qwerMap) idx = qwerMap[key];
+      else if (key >= '1' && key <= '8') idx = parseInt(key) - 1;
+
+      if (idx >= 0 && idx < POIS.length) {
+        const poi = POIS[idx];
+        flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom });
+        sounds.marker();
+
+        const label = key in qwerMap ? key.toUpperCase() : key;
+        setPoiToast(`${label}: ${poi.name}`);
+        if (toastTimeout.current) clearTimeout(toastTimeout.current);
+        toastTimeout.current = setTimeout(() => setPoiToast(null), 2000);
       }
     };
 
@@ -782,13 +786,13 @@ export default function TacticalMap() {
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2] glass-panel rounded-lg px-3 py-1.5">
         <div className="flex items-center gap-2 font-mono text-[8px]">
           <span className="font-bold uppercase tracking-[0.12em] mr-1" style={{ color: 'var(--text-muted)' }}>POI</span>
-          {POIS.map((poi) => (
+          {POIS.map((poi, i) => (
             <button key={poi.id}
               onClick={() => { flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom }); sounds.marker(); }}
               className="hover:text-white transition-colors px-1"
               style={{ color: 'var(--text-dim)' }}
               title={poi.description}>
-              <span style={{ color: 'var(--accent)' }}>{poi.key}</span>:{poi.name}
+              <span style={{ color: 'var(--accent)' }}>{poi.key}{i < 4 ? `/${['Q','W','E','R'][i]}` : ''}</span>:{poi.name}
             </button>
           ))}
         </div>

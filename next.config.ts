@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Cesium loaded via CDN — no webpack config needed
 };
 
 export default nextConfig;

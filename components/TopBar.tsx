@@ -74,7 +74,7 @@ export default function TopBar({ onToggleData, onToggleIntel, showData, showInte
       {/* Left -- Logo + Toggle buttons */}
       <div className="flex items-center gap-3">
         <span className="font-display text-[14px] leading-none tracking-[0.25em] font-bold" style={{ color: 'var(--cyan-500)' }}>
-          PULSE
+          SALA OPERATIVA
         </span>
 
         <div className="flex items-center gap-1 ml-1">

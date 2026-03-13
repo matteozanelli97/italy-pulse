@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { GLOBAL_CITIES, WMO_CODES } from '@/lib/constants';
+import { ITALIAN_CITIES, WMO_CODES } from '@/lib/constants';
 import type { WeatherData } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const lats = GLOBAL_CITIES.map((c) => c.lat).join(',');
-    const lngs = GLOBAL_CITIES.map((c) => c.lng).join(',');
+    const lats = ITALIAN_CITIES.map((c) => c.lat).join(',');
+    const lngs = ITALIAN_CITIES.map((c) => c.lng).join(',');
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation,surface_pressure,uv_index,visibility,dew_point_2m&timezone=auto`;
 
@@ -31,9 +31,9 @@ function mapCity(d: Record<string, unknown>, i: number): WeatherData {
   const c = d.current as Record<string, number>;
   const code = c?.weather_code ?? 0;
   return {
-    city: GLOBAL_CITIES[i]?.name ?? `City ${i}`,
-    latitude: GLOBAL_CITIES[i]?.lat ?? 0,
-    longitude: GLOBAL_CITIES[i]?.lng ?? 0,
+    city: ITALIAN_CITIES[i]?.name ?? `City ${i}`,
+    latitude: ITALIAN_CITIES[i]?.lat ?? 0,
+    longitude: ITALIAN_CITIES[i]?.lng ?? 0,
     temperature: c?.temperature_2m ?? 0,
     apparentTemperature: c?.apparent_temperature ?? 0,
     humidity: c?.relative_humidity_2m ?? 0,

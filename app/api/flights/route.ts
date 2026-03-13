@@ -3,9 +3,9 @@ import type { FlightTrack } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-// OpenSky Network — free, no API key needed (rate-limited)
-// Global endpoint — no bounding box
-const OPENSKY_URL = 'https://opensky-network.org/api/states/all';
+// OpenSky Network — filtered to Italian airspace
+// Bounding box: lat 35-48, lon 6-19
+const OPENSKY_URL = 'https://opensky-network.org/api/states/all?lamin=35&lomin=6&lamax=48&lomax=19';
 
 // Classify aircraft by callsign — global NATO and military patterns
 function classifyFlight(callsign: string): FlightTrack['type'] {
@@ -46,7 +46,7 @@ export async function GET() {
   try {
     const res = await fetch(OPENSKY_URL, {
       next: { revalidate: 15 },
-      headers: { 'User-Agent': 'Pulse/1.0' },
+      headers: { 'User-Agent': 'SalaOperativa/1.0' },
     });
 
     if (!res.ok) {

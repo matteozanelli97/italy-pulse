@@ -91,10 +91,10 @@ body {
 
 /* Glassmorphic panel — clean military */
 .glass-panel {
-  background: rgba(28,33,39,0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(45,114,210,0.18);
-  box-shadow: var(--shadow-elevated);
+  background: rgba(22,27,34,0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(45,114,210,0.3);
+  box-shadow: var(--shadow-elevated), inset 0 0 0 0.5px rgba(45,114,210,0.1);
 }
 
 /* MapLibre */

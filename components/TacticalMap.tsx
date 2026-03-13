@@ -156,7 +156,7 @@ const CountryBorders = memo(function CountryBorders() {
         const material = new THREE.LineBasicMaterial({
           color: '#2d72d2',
           transparent: true,
-          opacity: 0.25,
+          opacity: 0.45,
         });
 
         const lines: THREE.Line[] = [];
@@ -234,7 +234,7 @@ function FlightAltitudeLine({ lat, lng, altitude, color }: { lat: number; lng: n
     const surface = latLngToVec3(lat, lng, EARTH_RADIUS);
     const airPos = latLngToVec3(lat, lng, altitude);
     const geo = new THREE.BufferGeometry().setFromPoints([surface, airPos]);
-    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.12 });
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35 });
     return new THREE.Line(geo, mat);
   }, [lat, lng, altitude, color]);
 
@@ -325,7 +325,7 @@ function OrbitalPath({ sat }: { sat: SatelliteTrack }) {
     const mat = new THREE.LineDashedMaterial({
       color: '#4C90F0',
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.35,
       dashSize: 0.3,
       gapSize: 0.2,
     });
@@ -450,7 +450,7 @@ const CyberArcs = memo(function CyberArcs({ cyber }: { cyber: CyberThreat[] }) {
         : ct.severity === 'high' ? SEVERITY_COLORS.high
         : SEVERITY_COLORS.low;
 
-      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.2 });
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.45 });
       return { line: new THREE.Line(geo, mat), id: ct.id };
     });
   }, [cyber]);
@@ -550,7 +550,7 @@ const RoadCorridorLines = memo(function RoadCorridorLines({ visible }: { visible
 
   const objects = useMemo(() => {
     return lines.map(({ geo, id }) => {
-      const mat = new THREE.LineBasicMaterial({ color: '#FFD666', transparent: true, opacity: 0.08 });
+      const mat = new THREE.LineBasicMaterial({ color: '#FFD666', transparent: true, opacity: 0.2 });
       return { obj: new THREE.Line(geo, mat), id };
     });
   }, [lines]);
@@ -603,7 +603,7 @@ const TrafficParticles = memo(function TrafficParticles({ visible }: { visible: 
       // Interpolate position
       const pos = path[idx0].clone().lerp(path[idx1], frac);
       _dummy.position.copy(pos);
-      _dummy.scale.setScalar(0.006);
+      _dummy.scale.setScalar(0.018);
       _dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, _dummy.matrix);
     }
@@ -622,42 +622,37 @@ const TrafficParticles = memo(function TrafficParticles({ visible }: { visible: 
 
 // ── CCTV Frustum Projection — camera FOV cones at webcam locations ──
 const FRUSTUM_COLOR = new THREE.Color('#00FFCC');
-const FRUSTUM_REACH = 0.12; // length of frustum cone on globe surface
+const FRUSTUM_REACH_DEG = 3.5; // degrees of reach on the globe
 
 function CCTVFrustum({ lat, lng, heading, fov }: { lat: number; lng: number; heading: number; fov: number }) {
   const coneRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
 
-  // Camera position on globe
-  const pos = useMemo(() => latLngToVec3(lat, lng, EARTH_RADIUS * 1.002), [lat, lng]);
+  const pos = useMemo(() => latLngToVec3(lat, lng, EARTH_RADIUS * 1.004), [lat, lng]);
 
-  // Build frustum triangle (FOV fan shape) as a custom buffer geometry
+  // Build frustum fan geometry
   const frustumGeo = useMemo(() => {
     const halfFov = (fov / 2) * DEG2RAD;
     const hRad = heading * DEG2RAD;
-    const reach = FRUSTUM_REACH;
-
-    // Fan shape: apex at camera, two edges at FOV boundaries
-    const numSegments = 12;
+    const numSeg = 16;
     const vertices: number[] = [];
+    const cosLat = Math.cos(lat * DEG2RAD) || 0.01;
 
-    for (let i = 0; i < numSegments; i++) {
-      const t0 = -halfFov + (i / numSegments) * fov * DEG2RAD;
-      const t1 = -halfFov + ((i + 1) / numSegments) * fov * DEG2RAD;
-      const angle0 = hRad + t0;
-      const angle1 = hRad + t1;
+    for (let i = 0; i < numSeg; i++) {
+      const a0 = hRad - halfFov + (i / numSeg) * 2 * halfFov;
+      const a1 = hRad - halfFov + ((i + 1) / numSeg) * 2 * halfFov;
 
-      // Apex
-      const p0 = latLngToVec3(lat, lng, EARTH_RADIUS * 1.003);
-      // Edge points
-      const eLat0 = lat + Math.cos(angle0) * reach * 8;
-      const eLng0 = lng + Math.sin(angle0) * reach * 8 / Math.cos(lat * DEG2RAD);
-      const eLat1 = lat + Math.cos(angle1) * reach * 8;
-      const eLng1 = lng + Math.sin(angle1) * reach * 8 / Math.cos(lat * DEG2RAD);
-
-      const p1 = latLngToVec3(eLat0, eLng0, EARTH_RADIUS * 1.003);
-      const p2 = latLngToVec3(eLat1, eLng1, EARTH_RADIUS * 1.003);
-
+      const p0 = latLngToVec3(lat, lng, EARTH_RADIUS * 1.004);
+      const p1 = latLngToVec3(
+        lat + Math.cos(a0) * FRUSTUM_REACH_DEG,
+        lng + Math.sin(a0) * FRUSTUM_REACH_DEG / cosLat,
+        EARTH_RADIUS * 1.004
+      );
+      const p2 = latLngToVec3(
+        lat + Math.cos(a1) * FRUSTUM_REACH_DEG,
+        lng + Math.sin(a1) * FRUSTUM_REACH_DEG / cosLat,
+        EARTH_RADIUS * 1.004
+      );
       vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
     }
 
@@ -667,28 +662,27 @@ function CCTVFrustum({ lat, lng, heading, fov }: { lat: number; lng: number; hea
     return geo;
   }, [lat, lng, heading, fov]);
 
-  // Pulsing animation
   useFrame(({ clock }) => {
     if (coneRef.current) {
       const mat = coneRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.12 + Math.sin(clock.getElapsedTime() * 2) * 0.06;
+      mat.opacity = 0.22 + Math.sin(clock.getElapsedTime() * 2) * 0.1;
     }
     if (ringRef.current) {
       const mat = ringRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.5 + Math.sin(clock.getElapsedTime() * 3) * 0.3;
+      mat.opacity = 0.7 + Math.sin(clock.getElapsedTime() * 3) * 0.3;
     }
   });
 
   return (
     <group>
-      {/* Camera point marker */}
+      {/* Camera marker — bright pulsing dot */}
       <mesh ref={ringRef} position={pos}>
-        <sphereGeometry args={[0.02, 8, 8]} />
-        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.7} />
+        <sphereGeometry args={[0.04, 10, 10]} />
+        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.9} />
       </mesh>
-      {/* FOV fan */}
+      {/* FOV fan — semi-transparent coverage zone */}
       <mesh ref={coneRef} geometry={frustumGeo}>
-        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial color={FRUSTUM_COLOR} transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -887,7 +881,7 @@ function Scene() {
 function SliderCtrl({ label, value, onChange, max = 1 }: { label: string; value: number; onChange: (v: number) => void; max?: number }) {
   return (
     <div>
-      <div className="flex justify-between font-mono text-[8px] mb-0.5">
+      <div className="flex justify-between font-mono text-[9px] mb-1">
         <span style={{ color: 'var(--text-dim)' }}>{label}</span>
         <span style={{ color: '#fff' }}>{value.toFixed(2)}</span>
       </div>
@@ -1009,27 +1003,27 @@ export default function TacticalMap() {
       )}
 
       {/* ── HUD: TOP-LEFT — Layer toggle buttons ── */}
-      <div className="absolute top-3 left-3 z-[2] glass-panel flex items-center gap-2 rounded-lg px-3 py-2">
-        <span className="mr-1 font-mono text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Layers</span>
+      <div className="absolute top-3 left-3 z-[2] glass-panel flex items-center gap-2 rounded-lg px-3.5 py-2.5">
+        <span className="mr-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Layers</span>
         {(['flights', 'naval', 'cyber', 'satellites', 'traffic'] as const).map((layer) => (
           <button key={layer} onClick={() => { toggleMapLayer(layer); sounds.toggle(); }}
-            className={`layer-btn text-[9px] px-2 py-0.5 ${mapLayers[layer] ? 'active' : ''}`}>
+            className={`layer-btn text-[10px] px-2.5 py-1 ${mapLayers[layer] ? 'active' : ''}`}>
             {layer === 'flights' ? 'Flights' : layer === 'naval' ? 'Naval' : layer === 'satellites' ? 'Sat' : layer === 'traffic' ? 'Traffic' : 'Cyber'}
           </button>
         ))}
       </div>
 
       {/* ── HUD: TOP-CENTER — POI quick-jump bar ── */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2] glass-panel rounded-lg px-3 py-1.5">
-        <div className="flex items-center gap-2 font-mono text-[8px]">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2] glass-panel rounded-lg px-3.5 py-2">
+        <div className="flex items-center gap-2.5 font-mono text-[9px]">
           <span className="font-bold uppercase tracking-[0.12em] mr-1" style={{ color: 'var(--text-muted)' }}>POI</span>
           {POIS.map((poi, i) => (
             <button key={poi.id}
               onClick={() => { flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom }); sounds.marker(); }}
               className="hover:text-white transition-colors px-1"
-              style={{ color: 'var(--text-dim)' }}
+              style={{ color: 'var(--text-secondary)' }}
               title={poi.description}>
-              <span style={{ color: 'var(--accent)' }}>{poi.key}{i < 4 ? `/${['Q','W','E','R'][i]}` : ''}</span>:{poi.name}
+              <span style={{ color: 'var(--accent)' }}>{poi.key}{i < 4 ? `/${['Q','W','E','R'][i]}` : ''}</span> {poi.name}
             </button>
           ))}
         </div>
@@ -1038,17 +1032,17 @@ export default function TacticalMap() {
       {/* ── HUD: TOP-RIGHT — Sensor mode button + settings panel ── */}
       <div className="absolute top-3 right-3 z-[2]">
         <button onClick={() => { setShowControls(!showControls); sounds.click(); }}
-          className="glass-panel rounded-lg px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-wider"
-          style={{ color: shaderSettings.mode !== 'none' ? 'var(--accent)' : 'var(--text-dim)' }}>
+          className="glass-panel rounded-lg px-3.5 py-2 font-mono text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: shaderSettings.mode !== 'none' ? 'var(--accent)' : 'var(--text-secondary)' }}>
           SENSOR {shaderSettings.mode !== 'none' ? `[${shaderSettings.mode.toUpperCase()}]` : 'OFF'}
         </button>
         {showControls && (
-          <div className="glass-panel mt-1.5 rounded-lg p-3.5 space-y-2.5" style={{ width: 220 }}>
-            <div className="font-mono text-[8px] font-bold uppercase tracking-[0.15em] mb-1.5" style={{ color: 'var(--text-muted)' }}>Sensor Mode</div>
+          <div className="glass-panel mt-1.5 rounded-lg p-4 space-y-3" style={{ width: 240 }}>
+            <div className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] mb-2" style={{ color: 'var(--text-muted)' }}>Sensor Mode</div>
             <div className="flex gap-1.5">
               {(['none', 'crt', 'nvg', 'flir'] as ShaderMode[]).map((mode) => (
                 <button key={mode} onClick={() => { setShaderMode(mode); sounds.toggle(); }}
-                  className={`layer-btn text-[8px] px-2.5 py-0.5 ${shaderSettings.mode === mode ? 'active' : ''}`}>
+                  className={`layer-btn text-[9px] px-3 py-1 ${shaderSettings.mode === mode ? 'active' : ''}`}>
                   {mode === 'none' ? 'OFF' : mode.toUpperCase()}
                 </button>
               ))}
@@ -1065,7 +1059,7 @@ export default function TacticalMap() {
 
       {/* ── HUD: BOTTOM-LEFT — Telemetry bar ── */}
       <div className="absolute bottom-3 left-3 z-[2] glass-panel rounded-lg px-3.5 py-2">
-        <div className="flex items-center gap-3 font-mono text-[9px]" style={{ color: 'var(--text-dim)' }}>
+        <div className="flex items-center gap-3 font-mono text-[10px]" style={{ color: 'var(--text-secondary)' }}>
           <span style={{ color: 'var(--accent)' }}>3D GLOBE</span>
           <span style={{ color: 'var(--border-subtle)' }}>|</span>
           <span>MRK: <span style={{ color: '#fff' }}>{markerCount}</span></span>
@@ -1077,38 +1071,38 @@ export default function TacticalMap() {
       </div>
 
       {/* ── HUD: BOTTOM-RIGHT — Color legend ── */}
-      <div className="absolute bottom-3 right-3 z-[2] glass-panel rounded-lg px-3 py-1.5">
-        <div className="flex items-center gap-3 font-mono text-[8px]">
+      <div className="absolute bottom-3 right-3 z-[2] glass-panel rounded-lg px-3.5 py-2">
+        <div className="flex items-center gap-3 font-mono text-[9px]">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#4C90F0', boxShadow: '0 0 6px #4C90F0' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#4C90F0', boxShadow: '0 0 6px #4C90F0' }} />
             <span style={{ color: 'var(--text-dim)' }}>Commercial</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#EC9A3C', boxShadow: '0 0 6px #EC9A3C' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#EC9A3C', boxShadow: '0 0 6px #EC9A3C' }} />
             <span style={{ color: 'var(--text-dim)' }}>Military</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#738091', boxShadow: '0 0 6px #738091' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#738091', boxShadow: '0 0 6px #738091' }} />
             <span style={{ color: 'var(--text-dim)' }}>Cargo</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#fff', boxShadow: '0 0 6px rgba(45,114,210,0.4)' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#fff', boxShadow: '0 0 6px rgba(45,114,210,0.4)' }} />
             <span style={{ color: 'var(--text-dim)' }}>Satellite</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#CD4246', boxShadow: '0 0 6px #CD4246' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#CD4246', boxShadow: '0 0 6px #CD4246' }} />
             <span style={{ color: 'var(--text-dim)' }}>Seismic</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#E76A6E', boxShadow: '0 0 6px #E76A6E' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#E76A6E', boxShadow: '0 0 6px #E76A6E' }} />
             <span style={{ color: 'var(--text-dim)' }}>Cyber</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#00FFCC', boxShadow: '0 0 6px #00FFCC' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#00FFCC', boxShadow: '0 0 6px #00FFCC' }} />
             <span style={{ color: 'var(--text-dim)' }}>CCTV</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#FFD666', boxShadow: '0 0 6px #FFD666' }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: '#FFD666', boxShadow: '0 0 6px #FFD666' }} />
             <span style={{ color: 'var(--text-dim)' }}>Traffic</span>
           </span>
         </div>

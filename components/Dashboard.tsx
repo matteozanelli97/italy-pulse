@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, Component, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import TopBar from './TopBar';
 import LeftPanel from './LeftPanel';
@@ -9,6 +9,53 @@ import WebcamPreview from './WebcamPreview';
 import { useStore } from '@/lib/store';
 
 const TacticalMap = dynamic(() => import('./TacticalMap'), { ssr: false });
+
+// Error boundary for WebGL / Three.js crashes
+class GlobeBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  state = { error: null as string | null };
+  static getDerivedStateFromError(err: Error) { return { error: err.message }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex-1 flex items-center justify-center" style={{ background: '#050810' }}>
+          <div className="glass-panel rounded-xl p-8 max-w-md text-center space-y-3">
+            <div className="font-mono text-[13px] font-bold uppercase tracking-wider" style={{ color: '#ef4444' }}>
+              WEBGL ERROR
+            </div>
+            <p className="text-[12px] font-mono" style={{ color: 'var(--text-dim)' }}>
+              3D rendering failed. Try refreshing or using a WebGL-capable browser.
+            </p>
+            <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+              {this.state.error}
+            </p>
+            <button onClick={() => this.setState({ error: null })}
+              className="mt-3 px-4 py-1.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider"
+              style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--border-medium)' }}>
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Loading fallback for Canvas/textures
+function GlobeLoader() {
+  return (
+    <div className="flex-1 flex items-center justify-center" style={{ background: '#050810' }}>
+      <div className="text-center space-y-3">
+        <div className="h-16 w-16 mx-auto rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] animate-pulse"
+          style={{ color: 'var(--accent)' }}>
+          INITIALIZING 3D GLOBE
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const startPolling = useStore((s) => s.startPolling);
@@ -28,7 +75,11 @@ export default function Dashboard() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* 3D Globe fills entire space */}
         <div className="flex-1 relative">
-          <TacticalMap />
+          <GlobeBoundary>
+            <Suspense fallback={<GlobeLoader />}>
+              <TacticalMap />
+            </Suspense>
+          </GlobeBoundary>
         </div>
 
         {/* Floating left data panel */}

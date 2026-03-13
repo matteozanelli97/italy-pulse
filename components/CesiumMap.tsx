@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useStore } from '@/lib/store';
 import type { ShaderMode } from '@/types';
+import CesiumOverlays from './CesiumOverlays';
 
 // Italy bounding box
 const ITALY_BOUNDS = {
@@ -351,6 +352,9 @@ export default function CesiumMap() {
 
           {/* Compass / Coordinates HUD */}
           <CoordinatesHUD viewerRef={viewerRef} />
+
+          {/* Map data overlays (seismic + flights) */}
+          <CesiumOverlays viewerRef={viewerRef} ready={ready} />
         </>
       )}
     </div>

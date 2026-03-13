@@ -10,9 +10,11 @@ import PoliticalModule from './modules/PoliticalModule';
 import SerieAModule from './modules/SerieAModule';
 import EventsModule from './modules/EventsModule';
 import FuelModule from './modules/FuelModule';
+import ProtezioneCivileModule from './modules/ProtezioneCivileModule';
 import type { ModuleId } from '@/types';
 
 const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[] = [
+  { id: 'protezione-civile', label: 'PROTEZIONE CIVILE', Component: ProtezioneCivileModule },
   { id: 'political', label: 'SONDAGGI POLITICI', Component: PoliticalModule },
   { id: 'events', label: 'EVENTI & REFERENDUM', Component: EventsModule },
   { id: 'seismic', label: 'SISMICA (INGV)', Component: SeismicModule },

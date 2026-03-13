@@ -26,7 +26,7 @@ export default function FinancialModule({ search }: { search: string }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[11px] font-bold" style={{ color: 'var(--text-primary)' }}>
-                {t.currency === 'bps' ? '' : t.currency === 'USD' ? '$' : '€'}{t.price.toLocaleString('it-IT', { minimumFractionDigits: t.price < 10 ? 4 : 2, maximumFractionDigits: t.price < 10 ? 4 : 2 })}
+                {t.currency === 'bps' ? '' : t.currency === 'USD' ? '$' : '€'}{t.price.toLocaleString('en-US', { minimumFractionDigits: t.price < 10 ? 4 : 2, maximumFractionDigits: t.price < 10 ? 4 : 2 })}
               </span>
               <span className={`font-mono text-[10px] font-bold ${up ? 'text-[#3b82f6]' : 'text-[#ef4444]'}`}>
                 {up ? '+' : ''}{t.changePercent24h.toFixed(2)}%
@@ -45,5 +45,5 @@ function Shimmer() {
 }
 
 function Empty() {
-  return <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>;
+  return <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>No results</p>;
 }

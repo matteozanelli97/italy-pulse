@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import TopBar from './TopBar';
-import IconSidebar from './IconSidebar';
 import LeftPanel from './LeftPanel';
 import IntelStream from './IntelStream';
-import LiveChat from './LiveChat';
 import WebcamPreview from './WebcamPreview';
-import ArticleModal from './ArticleModal';
 import { useStore } from '@/lib/store';
 
 const TacticalMap = dynamic(() => import('./TacticalMap'), { ssr: false });
@@ -17,7 +14,8 @@ export default function Dashboard() {
   const startPolling = useStore((s) => s.startPolling);
   const stopPolling = useStore((s) => s.stopPolling);
   const openWebcams = useStore((s) => s.openWebcams);
-  const articleUrl = useStore((s) => s.articleUrl);
+  const [showData, setShowData] = useState(false);
+  const [showIntel, setShowIntel] = useState(false);
 
   useEffect(() => {
     startPolling();
@@ -25,36 +23,37 @@ export default function Dashboard() {
   }, [startPolling, stopPolling]);
 
   return (
-    <div className="flex h-screen w-screen flex-col" style={{ background: 'var(--bg-deepest)' }}>
-      <TopBar />
-      <div className="flex flex-1 overflow-hidden">
-        {/* Far-left: Icon sidebar for module toggles */}
-        <IconSidebar />
-
-        {/* Left panel: data modules */}
-        <LeftPanel />
-
-        {/* Center: Map + Chat at bottom */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 relative">
-            <TacticalMap />
-          </div>
-          {openWebcams.length > 0 && <WebcamPreview />}
-          {/* LiveChat sits below map, beside IntelStream */}
-          <div className="hidden lg:block flex-shrink-0">
-            <LiveChat />
-          </div>
+    <div className="flex h-screen w-screen flex-col" style={{ background: '#050810' }}>
+      <TopBar onToggleData={() => setShowData(!showData)} onToggleIntel={() => setShowIntel(!showIntel)} showData={showData} showIntel={showIntel} />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* 3D Globe fills entire space */}
+        <div className="flex-1 relative">
+          <TacticalMap />
         </div>
 
-        {/* Right column: Intel Stream (full height, beside map+chat) */}
-        <div className="hidden lg:flex w-[380px] flex-shrink-0 flex-col overflow-hidden border-l"
-          style={{ borderColor: 'var(--border-dim)' }}>
-          <IntelStream />
-        </div>
+        {/* Floating left data panel */}
+        {showData && (
+          <div className="absolute top-0 left-0 bottom-0 w-[360px] z-10 overflow-hidden border-r"
+            style={{ background: 'rgba(16,20,27,0.92)', backdropFilter: 'blur(12px)', borderColor: 'var(--border-dim)' }}>
+            <LeftPanel />
+          </div>
+        )}
+
+        {/* Floating right intel panel */}
+        {showIntel && (
+          <div className="absolute top-0 right-0 bottom-0 w-[380px] z-10 overflow-hidden border-l"
+            style={{ background: 'rgba(16,20,27,0.92)', backdropFilter: 'blur(12px)', borderColor: 'var(--border-dim)' }}>
+            <IntelStream />
+          </div>
+        )}
+
+        {/* Webcam dock */}
+        {openWebcams.length > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <WebcamPreview />
+          </div>
+        )}
       </div>
-
-      {/* Article modal overlay */}
-      {articleUrl && <ArticleModal />}
     </div>
   );
 }

@@ -5,10 +5,10 @@ import { useStore } from '@/lib/store';
 import type { SeismicEvent } from '@/types';
 
 const MAG_COLORS = [
-  { min: 0, color: '#32A467', label: 'Lieve' },
-  { min: 2.5, color: '#EC9A3C', label: 'Moderato' },
-  { min: 4.0, color: '#E76A6E', label: 'Forte' },
-  { min: 5.5, color: '#CD4246', label: 'Molto forte' },
+  { min: 0, color: '#32A467', label: 'Minor' },
+  { min: 2.5, color: '#EC9A3C', label: 'Moderate' },
+  { min: 4.0, color: '#E76A6E', label: 'Strong' },
+  { min: 5.5, color: '#CD4246', label: 'Major' },
 ];
 
 function getMagStyle(mag: number) {
@@ -27,7 +27,7 @@ export default function SeismicModule() {
     return (
       <div className="flex items-center gap-2 py-2">
         <div className="h-2 w-2 rounded-full animate-glow-breathe" style={{ background: 'var(--cyan-500)' }} />
-        <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Caricamento dati INGV<span className="init-dots" /></span>
+        <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Loading seismic data<span className="init-dots" /></span>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export default function SeismicModule() {
   if (events.length === 0) {
     return (
       <div className="py-2 text-center">
-        <span className="text-[10px] font-mono" style={{ color: 'var(--text-dim)' }}>Nessun evento sismico recente</span>
+        <span className="text-[10px] font-mono" style={{ color: 'var(--text-dim)' }}>No recent seismic events</span>
       </div>
     );
   }
@@ -56,11 +56,11 @@ export default function SeismicModule() {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full" style={{ background: maxStyle.color }} />
             <span className="text-[10px] font-bold" style={{ color: maxStyle.color }}>
-              {events.length} eventi · Max {maxMag.toFixed(1)} {maxStyle.label}
+              {events.length} events · Max {maxMag.toFixed(1)} {maxStyle.label}
             </span>
             <span className="flex-1" />
             <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>
-              {lastUpdate ? new Date(lastUpdate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : ''}
+              {lastUpdate ? new Date(lastUpdate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
             </span>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function SeismicModule() {
         <button onClick={() => setShowAll(!showAll)}
           className="w-full text-center py-1 text-[9px] font-mono font-bold uppercase tracking-wider"
           style={{ color: 'var(--accent)' }}>
-          {showAll ? 'Mostra meno' : `Mostra tutti (${events.length})`}
+          {showAll ? 'Show less' : `Show all (${events.length})`}
         </button>
       )}
     </div>
@@ -89,8 +89,8 @@ function EventRow({ event, onFlyTo }: { event: SeismicEvent; onFlyTo: () => void
   const d = new Date(event.time);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
-  const timeStr = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = isToday ? timeStr : `${d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
+  const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = isToday ? timeStr : `${d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
 
   return (
     <button onClick={onFlyTo}
@@ -103,7 +103,7 @@ function EventRow({ event, onFlyTo }: { event: SeismicEvent; onFlyTo: () => void
       <div className="flex-1 min-w-0">
         <p className="text-[10px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{event.place}</p>
         <div className="flex items-center gap-2">
-          <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>Prof. {event.depth.toFixed(0)}km</span>
+          <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>Depth {event.depth.toFixed(0)}km</span>
           <span className="text-[8px] font-mono" style={{ color: 'var(--text-dim)' }}>{event.magnitudeType}</span>
         </div>
       </div>

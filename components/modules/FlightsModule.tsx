@@ -2,7 +2,7 @@
 
 import { useStore } from '@/lib/store';
 
-export default function FlightsModule({ search }: { search: string }) {
+export default function FlightsModule({ search = '' }: { search?: string }) {
   const { data: flights, loading } = useStore((s) => s.flights);
   const flyTo = useStore((s) => s.flyTo);
   const selectMarker = useStore((s) => s.selectMarker);
@@ -37,7 +37,7 @@ export default function FlightsModule({ search }: { search: string }) {
           </button>
         );
       })}
-      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
+      {filtered.length === 0 && <p className="text-[10px] text-center py-4" style={{ color: 'var(--text-dim)' }}>No results</p>}
     </div>
   );
 }

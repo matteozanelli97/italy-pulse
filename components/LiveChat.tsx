@@ -16,7 +16,7 @@ export default function LiveChat() {
   const open = useStore((s) => s.chatOpen);
   const setOpen = useStore((s) => s.setChatOpen);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'sys-1', nickname: 'Sistema', avatar: 'S', message: 'Benvenuti nella live chat di Italy Pulse. Scegli un nickname per partecipare.', timestamp: new Date().toISOString(), location: 'Server' },
+    { id: 'sys-1', nickname: 'System', avatar: 'S', message: 'Welcome to the PULSE live chat. Choose a nickname to participate.', timestamp: new Date().toISOString(), location: 'Server' },
   ]);
   const [input, setInput] = useState('');
   const [profile, setProfile] = useState<{ nickname: string; avatar: string } | null>(null);
@@ -54,7 +54,7 @@ export default function LiveChat() {
     }
     setMessages((prev) => [...prev.slice(-50), {
       id: `user-${Date.now()}`, nickname: profile.nickname, avatar: profile.avatar,
-      message: text, timestamp: new Date().toISOString(), location: 'Italia',
+      message: text, timestamp: new Date().toISOString(), location: 'Web',
     }]);
     setInput('');
   }, [input, profile]);
@@ -123,7 +123,7 @@ export default function LiveChat() {
                           <div className="flex items-center gap-1 mb-0.5" style={isMe ? { justifyContent: 'flex-end' } : undefined}>
                             <span className="text-[9px] font-semibold" style={{ color: isSystem ? 'var(--accent)' : color }}>{msg.nickname}</span>
                             <span className="text-[8px]" style={{ color: 'var(--text-muted)' }}>
-                              {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           <div className="rounded-lg px-2.5 py-1.5 text-[11px] leading-relaxed inline-block"

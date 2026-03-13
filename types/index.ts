@@ -1,5 +1,5 @@
 // ============================================================
-// ITALY PULSE — OSINT Dashboard Types (C4ISR)
+// PULSE — Global OSINT Dashboard Types
 // ============================================================
 
 export interface GeoCoord { lat: number; lng: number }
@@ -35,7 +35,7 @@ export interface MarketTick {
   price: number; change24h: number; changePercent24h: number;
   lastUpdate: string; currency: string;
   sparkline?: number[];
-  region?: 'IT' | 'US';
+  region?: 'US' | 'EU' | 'ASIA' | 'IT';
   category?: 'index' | 'stock' | 'crypto' | 'forex' | 'commodity' | 'bond' | 'energy';
 }
 
@@ -58,7 +58,7 @@ export interface TransportAlert {
   title: string; description: string;
   severity: 'low' | 'medium' | 'high';
   timestamp: string; route?: string;
-  status?: 'regolare' | 'rallentato' | 'critico' | 'sospeso';
+  status?: string;
 }
 
 export interface FlightTrack {
@@ -95,6 +95,9 @@ export interface SatelliteTrack {
   velocity: number;
   type: 'communication' | 'weather' | 'navigation' | 'military' | 'science' | 'other';
   country: string;
+  inclination?: number;
+  raan?: number;
+  period?: number;
 }
 
 export interface LiveCam {
@@ -129,6 +132,16 @@ export interface ChatMessage {
   message: string; timestamp: string; location: string;
 }
 
+export interface POI {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+  key: string;
+  description: string;
+}
+
 export type ShaderMode = 'none' | 'crt' | 'nvg' | 'flir';
 
 export interface ShaderSettings {
@@ -137,7 +150,7 @@ export interface ShaderSettings {
   bloom: number; sharpening: number;
 }
 
-export type ModuleId = 'markets' | 'weatherAqi' | 'mobility' | 'cyber' | 'livecams' | 'seismic';
+export type ModuleId = 'markets' | 'weather' | 'seismic' | 'services' | 'livecams' | 'flights';
 
 export interface ModuleConfig {
   id: ModuleId; label: string;

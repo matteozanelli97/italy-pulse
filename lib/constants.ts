@@ -1,17 +1,13 @@
 // ============================================================
-// ITALY PULSE — Constants & Configuration
+// PULSE — Global Constants & Configuration
 // ============================================================
 
 import type { GeoCoord, ModuleConfig } from '@/types';
 
-export const ITALY_CENTER: GeoCoord = { lat: 42.0, lng: 12.5 };
-export const ITALY_ZOOM = 5.8;
+export const GLOBAL_DEFAULT: GeoCoord = { lat: 30, lng: 0 };
+export const ITALY_ZOOM = 2.5;
 export const ITALY_PITCH = 50;
 export const ITALY_BEARING = -5;
-
-export const ITALY_BOUNDS = {
-  north: 47.1, south: 35.5, west: 6.6, east: 18.6,
-} as const;
 
 // Polling intervals (ms)
 export const POLL_WEATHER = 300_000;
@@ -22,120 +18,91 @@ export const POLL_TRANSPORT = 120_000;
 export const POLL_ENERGY = 300_000;
 export const POLL_SATELLITES = 30_000;
 
-export const MONITORED_CITIES = [
-  { name: 'Roma', lat: 41.9028, lng: 12.4964 },
-  { name: 'Milano', lat: 45.4642, lng: 9.19 },
-  { name: 'Napoli', lat: 40.8518, lng: 14.2681 },
-  { name: 'Torino', lat: 45.0703, lng: 7.6869 },
-  { name: 'Palermo', lat: 38.1157, lng: 13.3615 },
-  { name: 'Genova', lat: 44.4056, lng: 8.9463 },
-  { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
-  { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
-  { name: 'Bari', lat: 41.1171, lng: 16.8719 },
-  { name: 'Catania', lat: 37.5079, lng: 15.09 },
-  { name: 'Venezia', lat: 45.4408, lng: 12.3155 },
-  { name: 'Cagliari', lat: 39.2238, lng: 9.1217 },
-  { name: 'Trieste', lat: 45.6495, lng: 13.7768 },
-  { name: "L'Aquila", lat: 42.3498, lng: 13.3995 },
-  { name: 'Perugia', lat: 43.1107, lng: 12.3908 },
-  { name: 'Ancona', lat: 43.6158, lng: 13.5189 },
-  { name: 'Potenza', lat: 40.6404, lng: 15.8056 },
-  { name: 'Catanzaro', lat: 38.891, lng: 16.5987 },
-  { name: 'Campobasso', lat: 41.5603, lng: 14.6626 },
-  { name: 'Aosta', lat: 45.7375, lng: 7.3154 },
+// Global Points of Interest — keyboard shortcuts 1-8
+export const POIS = [
+  { id: 'pentagon', name: 'Pentagon', lat: 38.871, lng: -77.056, zoom: 14, key: '1', description: 'US Department of Defense HQ' },
+  { id: 'kremlin', name: 'Kremlin', lat: 55.752, lng: 37.617, zoom: 14, key: '2', description: 'Russian seat of government' },
+  { id: 'burj-khalifa', name: 'Burj Khalifa', lat: 25.197, lng: 55.274, zoom: 14, key: '3', description: 'Tallest building in the world, Dubai' },
+  { id: 'london', name: 'London', lat: 51.507, lng: -0.128, zoom: 14, key: '4', description: 'Capital of the United Kingdom' },
+  { id: 'tokyo', name: 'Tokyo', lat: 35.682, lng: 139.692, zoom: 14, key: '5', description: 'Capital of Japan' },
+  { id: 'beijing', name: 'Beijing', lat: 39.905, lng: 116.397, zoom: 14, key: '6', description: 'Capital of China' },
+  { id: 'sydney', name: 'Sydney', lat: -33.869, lng: 151.209, zoom: 14, key: '7', description: 'Largest city in Australia' },
+  { id: 'sao-paulo', name: 'Sao Paulo', lat: -23.550, lng: -46.633, zoom: 14, key: '8', description: 'Largest city in South America' },
+] as const;
+
+// Global cities covering all continents (20 cities)
+export const GLOBAL_CITIES = [
+  { name: 'New York', lat: 40.7128, lng: -74.0060 },
+  { name: 'London', lat: 51.5074, lng: -0.1278 },
+  { name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
+  { name: 'Beijing', lat: 39.9042, lng: 116.4074 },
+  { name: 'Moscow', lat: 55.7558, lng: 37.6173 },
+  { name: 'Sydney', lat: -33.8688, lng: 151.2093 },
+  { name: 'Dubai', lat: 25.2048, lng: 55.2708 },
+  { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
+  { name: 'Sao Paulo', lat: -23.5505, lng: -46.6333 },
+  { name: 'Lagos', lat: 6.5244, lng: 3.3792 },
+  { name: 'Cairo', lat: 30.0444, lng: 31.2357 },
+  { name: 'Paris', lat: 48.8566, lng: 2.3522 },
+  { name: 'Berlin', lat: 52.5200, lng: 13.4050 },
+  { name: 'Singapore', lat: 1.3521, lng: 103.8198 },
+  { name: 'Seoul', lat: 37.5665, lng: 126.9780 },
+  { name: 'Mexico City', lat: 19.4326, lng: -99.1332 },
+  { name: 'Buenos Aires', lat: -34.6037, lng: -58.3816 },
+  { name: 'Nairobi', lat: -1.2921, lng: 36.8219 },
+  { name: 'Istanbul', lat: 41.0082, lng: 28.9784 },
+  { name: 'Toronto', lat: 43.6532, lng: -79.3832 },
 ] as const;
 
 export const SEVERITY_COLORS = {
   low: '#2D72D2', medium: '#EC9A3C', high: '#E76A6E', critical: '#CD4246',
 } as const;
 
-// News category colors — only 4 categories
+// News category colors — 4 categories (English)
 export const CATEGORY_COLORS: Record<string, string> = {
   Politics: '#8b5cf6',
   Economy: '#EC9A3C',
   World: '#2D72D2',
-  Cronaca: '#ec4899',
+  Security: '#ec4899',
 };
 
-// Left panel modules
+// Left panel modules (English)
 export const MODULES: ModuleConfig[] = [
-  { id: 'markets', label: 'Mercati', description: 'Mercati IT/US + Energia', icon: 'markets' },
-  { id: 'weatherAqi', label: 'Meteo & AQI', description: 'Meteo + Qualità Aria', icon: 'weather' },
-  { id: 'mobility', label: 'Viabilità', description: 'Traffico e trasporti live', icon: 'mobility' },
-  { id: 'cyber', label: 'Stato Servizi', description: 'Servizi Italia in tempo reale', icon: 'cyber' },
-  { id: 'livecams', label: 'Live Cams', description: 'Webcam e dirette', icon: 'livecams' },
-  { id: 'seismic', label: 'Sismografo', description: 'Terremoti Italia INGV', icon: 'seismic' },
+  { id: 'markets', label: 'Markets', description: 'Global markets & energy', icon: 'markets' },
+  { id: 'weather', label: 'Weather', description: 'Weather & air quality', icon: 'weather' },
+  { id: 'seismic', label: 'Seismic', description: 'Global earthquakes (USGS)', icon: 'seismic' },
+  { id: 'services', label: 'Services', description: 'Global service status', icon: 'cyber' },
+  { id: 'livecams', label: 'Live Cams', description: 'Webcams & live feeds', icon: 'livecams' },
+  { id: 'flights', label: 'Flights', description: 'Live global air traffic', icon: 'mobility' },
 ];
 
+// WMO weather codes (English)
 export const WMO_CODES: Record<number, string> = {
-  0: 'Sereno', 1: 'Prevalentemente sereno', 2: 'Parzialmente nuvoloso', 3: 'Coperto',
-  45: 'Nebbia', 48: 'Nebbia con brina',
-  51: 'Pioviggine leggera', 53: 'Pioviggine moderata', 55: 'Pioviggine intensa',
-  61: 'Pioggia leggera', 63: 'Pioggia moderata', 65: 'Pioggia intensa',
-  71: 'Neve leggera', 73: 'Neve moderata', 75: 'Neve intensa', 77: 'Granuli di neve',
-  80: 'Rovesci leggeri', 81: 'Rovesci moderati', 82: 'Rovesci violenti',
-  85: 'Neve leggera a rovesci', 86: 'Neve intensa a rovesci',
-  95: 'Temporale', 96: 'Temporale con grandine leggera', 99: 'Temporale con grandine forte',
+  0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Fog', 48: 'Depositing rime fog',
+  51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+  61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+  71: 'Slight snowfall', 73: 'Moderate snowfall', 75: 'Heavy snowfall', 77: 'Snow grains',
+  80: 'Slight rain showers', 81: 'Moderate rain showers', 82: 'Violent rain showers',
+  85: 'Slight snow showers', 86: 'Heavy snow showers',
+  95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail',
 };
 
-// Source favicons/logos map
+// Source favicons/logos — global news sources
 export const SOURCE_FAVICONS: Record<string, string> = {
-  ANSA: 'https://www.ansa.it/favicon.ico',
-  Repubblica: 'https://www.repubblica.it/favicon.ico',
-  Corriere: 'https://images2.corrieredellasera.it/etc.clientlibs/corrieredellasera/clientlibs/bundle/resources/images/favicon.ico',
-  Sole24Ore: 'https://www.ilsole24ore.com/favicon.ico',
-  Adnkronos: 'https://www.adnkronos.com/favicon.ico',
-  SkyTG24: 'https://tg24.sky.it/favicon.ico',
-  AGI: 'https://www.agi.it/favicon.ico',
-  TGCOM24: 'https://www.tgcom24.mediaset.it/favicon.ico',
-  'Il Fatto': 'https://www.ilfattoquotidiano.it/favicon.ico',
-  Open: 'https://www.open.online/favicon.ico',
-  Fanpage: 'https://www.fanpage.it/favicon.ico',
-  'Il Post': 'https://www.ilpost.it/favicon.ico',
-  'HuffPost IT': 'https://www.huffingtonpost.it/favicon.ico',
-  'Il Giornale': 'https://www.ilgiornale.it/favicon.ico',
-  'Rai News': 'https://www.rainews.it/favicon.ico',
-  'La Stampa': 'https://www.lastampa.it/favicon.ico',
-  'Il Messaggero': 'https://www.ilmessaggero.it/favicon.ico',
   Reuters: 'https://www.reuters.com/favicon.ico',
-  NYT: 'https://www.nytimes.com/favicon.ico',
   BBC: 'https://www.bbc.co.uk/favicon.ico',
   CNN: 'https://www.cnn.com/favicon.ico',
+  AP: 'https://apnews.com/favicon.ico',
+  'Al Jazeera': 'https://www.aljazeera.com/favicon.ico',
+  NHK: 'https://www3.nhk.or.jp/favicon.ico',
+  NYT: 'https://www.nytimes.com/favicon.ico',
   Guardian: 'https://www.theguardian.com/favicon.ico',
   WashPost: 'https://www.washingtonpost.com/favicon.ico',
+  DW: 'https://www.dw.com/favicon.ico',
+  France24: 'https://www.france24.com/favicon.ico',
+  SCMP: 'https://www.scmp.com/favicon.ico',
   X: 'https://abs.twimg.com/favicons/twitter.3.ico',
   Twitter: 'https://abs.twimg.com/favicons/twitter.3.ico',
   Telegram: 'https://telegram.org/favicon.ico',
 };
-
-// Italian highways for mobility module
-export const ITALIAN_HIGHWAYS = [
-  { code: 'A1', name: 'Autostrada del Sole', route: 'Milano - Roma - Napoli', km: 759 },
-  { code: 'A4', name: 'Serenissima', route: 'Torino - Milano - Venezia - Trieste', km: 517 },
-  { code: 'A14', name: 'Adriatica', route: 'Bologna - Bari - Taranto', km: 743 },
-  { code: 'A3', name: 'SA-RC', route: 'Salerno - Reggio Calabria', km: 443 },
-  { code: 'A12', name: 'Azzurra', route: 'Genova - Livorno', km: 155 },
-  { code: 'A13', name: 'BO-PD', route: 'Bologna - Padova', km: 116 },
-  { code: 'A7', name: 'Serravalle', route: 'Milano - Genova', km: 134 },
-  { code: 'A22', name: 'Brennero', route: 'Brennero - Modena', km: 314 },
-] as const;
-
-export const MAJOR_AIRPORTS = [
-  { code: 'FCO', name: 'Fiumicino', city: 'Roma' },
-  { code: 'MXP', name: 'Malpensa', city: 'Milano' },
-  { code: 'LIN', name: 'Linate', city: 'Milano' },
-  { code: 'NAP', name: 'Capodichino', city: 'Napoli' },
-  { code: 'VCE', name: 'Marco Polo', city: 'Venezia' },
-  { code: 'BLQ', name: 'Marconi', city: 'Bologna' },
-  { code: 'CTA', name: 'Fontanarossa', city: 'Catania' },
-  { code: 'PMO', name: 'Falcone-Borsellino', city: 'Palermo' },
-] as const;
-
-export const MAJOR_PORTS = [
-  { name: 'Genova', type: 'Commerciale' },
-  { name: 'Trieste', type: 'Commerciale' },
-  { name: 'Gioia Tauro', type: 'Container' },
-  { name: 'Napoli', type: 'Commerciale/Passeggeri' },
-  { name: 'Livorno', type: 'Commerciale' },
-  { name: 'La Spezia', type: 'Commerciale' },
-] as const;

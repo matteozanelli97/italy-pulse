@@ -1,23 +1,35 @@
 'use client';
 
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars, Html, useTexture, Sphere } from '@react-three/drei';
+import { useRef, useState, useMemo, useCallback, useEffect, memo } from 'react';
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
+import { OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useStore } from '@/lib/store';
 import { sounds } from '@/lib/sounds';
+import { POIS, GLOBAL_CITIES, SEVERITY_COLORS } from '@/lib/constants';
 import type { FlightTrack, NavalTrack, CyberThreat, SatelliteTrack, SeismicEvent, ShaderMode } from '@/types';
 
 // ── Constants ──
 const EARTH_RADIUS = 5;
-const ITALY_LAT = 42.0;
-const ITALY_LNG = 12.5;
-const ALT_SCALE = 0.00003; // feet → globe units for flights
-const SAT_ALT_SCALE = 0.000012; // km → globe units for satellites
+const ALT_SCALE = 0.00003; // feet -> globe units for flights
+const SAT_ALT_SCALE = 0.000012; // km -> globe units for satellites
 const DEG2RAD = Math.PI / 180;
+const MAX_MARKERS = 500;
 
-// ── Coordinate conversion: lat/lng → 3D position on sphere ──
+// Major cities for cyber arc targets
+const MAJOR_CITIES = [
+  { lat: 40.7128, lng: -74.006 },   // New York
+  { lat: 51.5074, lng: -0.1278 },   // London
+  { lat: 48.8566, lng: 2.3522 },    // Paris
+  { lat: 35.6762, lng: 139.6503 },  // Tokyo
+  { lat: 52.52, lng: 13.405 },      // Berlin
+  { lat: 55.7558, lng: 37.6173 },   // Moscow
+  { lat: 39.9042, lng: 116.4074 },  // Beijing
+  { lat: -33.8688, lng: 151.2093 }, // Sydney
+];
+
+// ── Coordinate conversion: lat/lng -> 3D position on sphere ──
 function latLngToVec3(lat: number, lng: number, radius: number = EARTH_RADIUS): THREE.Vector3 {
   const phi = (90 - lat) * DEG2RAD;
   const theta = (lng + 180) * DEG2RAD;
@@ -28,107 +40,122 @@ function latLngToVec3(lat: number, lng: number, radius: number = EARTH_RADIUS): 
   );
 }
 
-// Initial camera position looking at Italy
-function getItalyCameraPos(): THREE.Vector3 {
-  const target = latLngToVec3(ITALY_LAT, ITALY_LNG, EARTH_RADIUS);
+// Initial camera position looking at 30N, 0E (Atlantic/Europe view)
+function getInitialCameraPos(): THREE.Vector3 {
+  const target = latLngToVec3(30, 0, EARTH_RADIUS);
   return target.clone().normalize().multiplyScalar(EARTH_RADIUS * 2.4);
 }
 
-// ── Earth Globe ──
-function EarthGlobe() {
+// ── Atmosphere Fresnel Shader ──
+const atmosphereVertexShader = `
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const atmosphereFragmentShader = `
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  uniform vec3 glowColor;
+  uniform float intensity;
+  uniform float power;
+  void main() {
+    vec3 viewDir = normalize(-vPosition);
+    float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), power);
+    gl_FragColor = vec4(glowColor, fresnel * intensity);
+  }
+`;
+
+// ── Earth Globe with NASA textures ──
+const EarthGlobe = memo(function EarthGlobe() {
   const meshRef = useRef<THREE.Mesh>(null);
+  const dayTexture = useLoader(
+    THREE.TextureLoader,
+    'https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74218/world.200412.3x5400x2700.jpg'
+  );
+  const nightTexture = useLoader(
+    THREE.TextureLoader,
+    'https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79790/city_lights_2012.jpg'
+  );
 
-  // Use procedural textures since we can't guarantee external texture URLs
-  const earthTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d')!;
-    // Dark background (ocean)
-    ctx.fillStyle = '#0a0e17';
-    ctx.fillRect(0, 0, 2048, 1024);
-    return new THREE.CanvasTexture(canvas);
-  }, []);
+  // Slow rotation
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.0001;
+    }
+  });
 
   return (
     <group>
-      {/* Earth sphere */}
-      <Sphere ref={meshRef} args={[EARTH_RADIUS, 128, 128]}>
-        <meshPhongMaterial
-          color="#0d1420"
-          emissive="#060a12"
-          emissiveIntensity={0.3}
-          specular="#1a2744"
-          shininess={15}
-          transparent
-          opacity={0.95}
+      {/* Earth sphere with NASA textures */}
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[EARTH_RADIUS, 128, 128]} />
+        <meshStandardMaterial
+          map={dayTexture}
+          emissiveMap={nightTexture}
+          emissive={new THREE.Color('#ffffff')}
+          emissiveIntensity={0.6}
+          metalness={0.1}
+          roughness={0.8}
         />
-      </Sphere>
+      </mesh>
 
-      {/* Atmosphere glow (outer ring) */}
-      <Sphere args={[EARTH_RADIUS * 1.015, 64, 64]}>
-        <meshBasicMaterial
-          color="#1a4a8a"
+      {/* Atmosphere Fresnel rim glow — BackSide */}
+      <mesh>
+        <sphereGeometry args={[EARTH_RADIUS * 1.02, 64, 64]} />
+        <shaderMaterial
+          vertexShader={atmosphereVertexShader}
+          fragmentShader={atmosphereFragmentShader}
+          uniforms={{
+            glowColor: { value: new THREE.Color('#4a90d9') },
+            intensity: { value: 0.8 },
+            power: { value: 3.5 },
+          }}
           transparent
-          opacity={0.08}
           side={THREE.BackSide}
+          depthWrite={false}
         />
-      </Sphere>
+      </mesh>
 
-      {/* Grid lines */}
-      <GlobeGrid />
+      {/* Outer haze sphere */}
+      <mesh>
+        <sphereGeometry args={[EARTH_RADIUS * 1.06, 64, 64]} />
+        <meshBasicMaterial
+          color="#1a5aaa"
+          transparent
+          opacity={0.04}
+          side={THREE.BackSide}
+          depthWrite={false}
+        />
+      </mesh>
     </group>
   );
-}
+});
 
-// ── Grid lines on globe ──
-function GlobeGrid() {
-  const gridLines = useMemo(() => {
-    const lines: THREE.BufferGeometry[] = [];
-
-    // Latitude lines every 15°
-    for (let lat = -75; lat <= 75; lat += 15) {
-      const points: THREE.Vector3[] = [];
-      for (let lng = -180; lng <= 180; lng += 2) {
-        points.push(latLngToVec3(lat, lng, EARTH_RADIUS * 1.001));
-      }
-      const geo = new THREE.BufferGeometry().setFromPoints(points);
-      lines.push(geo);
-    }
-
-    // Longitude lines every 15°
-    for (let lng = -180; lng < 180; lng += 15) {
-      const points: THREE.Vector3[] = [];
-      for (let lat = -90; lat <= 90; lat += 2) {
-        points.push(latLngToVec3(lat, lng, EARTH_RADIUS * 1.001));
-      }
-      const geo = new THREE.BufferGeometry().setFromPoints(points);
-      lines.push(geo);
-    }
-
-    return lines;
-  }, []);
-
-  return (
-    <group>
-      {gridLines.map((geo, i) => (
-        <primitive key={i} object={new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#1a2744', transparent: true, opacity: 0.15 }))} />
-      ))}
-    </group>
-  );
-}
-
-// ── Country borders (simplified GeoJSON rendering) ──
-function CountryBorders() {
-  const [borders, setBorders] = useState<THREE.BufferGeometry[]>([]);
+// ── Country borders from GeoJSON ──
+const CountryBorders = memo(function CountryBorders() {
+  const [borderObjects, setBorderObjects] = useState<THREE.Line[]>([]);
 
   useEffect(() => {
-    const loadBorders = async () => {
+    let cancelled = false;
+    const load = async () => {
       try {
         const res = await fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson');
-        if (!res.ok) return;
+        if (!res.ok || cancelled) return;
         const geo = await res.json();
-        const geometries: THREE.BufferGeometry[] = [];
+        if (cancelled) return;
+
+        const material = new THREE.LineBasicMaterial({
+          color: '#2d72d2',
+          transparent: true,
+          opacity: 0.25,
+        });
+
+        const lines: THREE.Line[] = [];
 
         for (const feature of geo.features) {
           const coords = feature.geometry.type === 'MultiPolygon'
@@ -138,7 +165,6 @@ function CountryBorders() {
           for (const ring of coords) {
             if (!Array.isArray(ring) || ring.length < 3) continue;
             const points: THREE.Vector3[] = [];
-            // Sample every Nth point for performance
             const step = Math.max(1, Math.floor(ring.length / 200));
             for (let i = 0; i < ring.length; i += step) {
               const [lng, lat] = ring[i];
@@ -147,169 +173,302 @@ function CountryBorders() {
               }
             }
             if (points.length > 2) {
-              points.push(points[0].clone()); // close ring
-              geometries.push(new THREE.BufferGeometry().setFromPoints(points));
-            }
-          }
-        }
-
-        setBorders(geometries);
-      } catch { /* ignore */ }
-    };
-    loadBorders();
-  }, []);
-
-  return (
-    <group>
-      {borders.map((geo, i) => (
-        <primitive key={i} object={new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#2d72d2', transparent: true, opacity: 0.2 }))} />
-      ))}
-    </group>
-  );
-}
-
-// ── Italy highlight ──
-function ItalyHighlight() {
-  const [geometry, setGeometry] = useState<THREE.BufferGeometry[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson');
-        if (!res.ok) return;
-        const geo = await res.json();
-        const geos: THREE.BufferGeometry[] = [];
-
-        for (const feature of geo.features) {
-          const coords = feature.geometry.type === 'MultiPolygon'
-            ? feature.geometry.coordinates.flat()
-            : feature.geometry.coordinates;
-
-          for (const ring of coords) {
-            if (!Array.isArray(ring) || ring.length < 3) continue;
-            const points: THREE.Vector3[] = [];
-            for (let i = 0; i < ring.length; i++) {
-              const [lng, lat] = ring[i];
-              if (typeof lng === 'number' && typeof lat === 'number') {
-                points.push(latLngToVec3(lat, lng, EARTH_RADIUS * 1.003));
-              }
-            }
-            if (points.length > 2) {
               points.push(points[0].clone());
-              geos.push(new THREE.BufferGeometry().setFromPoints(points));
+              const geometry = new THREE.BufferGeometry().setFromPoints(points);
+              lines.push(new THREE.Line(geometry, material));
             }
           }
         }
-        setGeometry(geos);
-      } catch { /* ignore */ }
+
+        if (!cancelled) setBorderObjects(lines);
+      } catch { /* ignore fetch errors */ }
     };
     load();
+    return () => { cancelled = true; };
   }, []);
 
   return (
     <group>
-      {geometry.map((geo, i) => (
-        <primitive key={i} object={new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#4C90F0', transparent: true, opacity: 0.55 }))} />
+      {borderObjects.map((line, i) => (
+        <primitive key={i} object={line} />
       ))}
     </group>
   );
-}
+});
 
 // ── Flight markers ──
-function FlightMarkers({ flights, visible }: { flights: FlightTrack[]; visible: boolean }) {
-  const prevPositions = useRef<Map<string, THREE.Vector3>>(new Map());
-  const groupRef = useRef<THREE.Group>(null);
+const FlightMarkers = memo(function FlightMarkers({ flights, visible }: { flights: FlightTrack[]; visible: boolean }) {
+  if (!visible || flights.length === 0) return null;
 
-  if (!visible) return null;
+  const limited = flights.slice(0, MAX_MARKERS);
 
   return (
-    <group ref={groupRef}>
-      {flights.map((fl) => {
+    <group>
+      {limited.map((fl) => {
         const alt = EARTH_RADIUS + fl.altitude * ALT_SCALE;
         const pos = latLngToVec3(fl.latitude, fl.longitude, alt);
-        const isMil = fl.type === 'military';
-        const color = isMil ? '#EC9A3C' : '#4C90F0';
+        const color = fl.type === 'military' ? '#EC9A3C' : fl.type === 'cargo' ? '#738091' : '#4C90F0';
 
         return (
-          <group key={fl.id} position={pos}>
-            <FlightDot color={color} flightId={fl.id} />
-            {/* Altitude line to surface */}
-            <AltitudeLine lat={fl.latitude} lng={fl.longitude} altitude={alt} color={color} />
+          <group key={fl.id}>
+            {/* Aircraft dot */}
+            <mesh position={pos}>
+              <sphereGeometry args={[0.02, 6, 6]} />
+              <meshBasicMaterial color={color} transparent opacity={0.9} />
+            </mesh>
+            {/* Altitude line */}
+            <FlightAltitudeLine lat={fl.latitude} lng={fl.longitude} altitude={alt} color={color} />
           </group>
         );
       })}
     </group>
   );
+});
+
+function FlightAltitudeLine({ lat, lng, altitude, color }: { lat: number; lng: number; altitude: number; color: string }) {
+  const lineObj = useMemo(() => {
+    const surface = latLngToVec3(lat, lng, EARTH_RADIUS);
+    const airPos = latLngToVec3(lat, lng, altitude);
+    const geo = new THREE.BufferGeometry().setFromPoints([surface, airPos]);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.12 });
+    return new THREE.Line(geo, mat);
+  }, [lat, lng, altitude, color]);
+
+  return <primitive object={lineObj} />;
 }
 
-function FlightDot({ color, flightId }: { color: string; flightId: string }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const selectMarker = useStore((s) => s.selectMarker);
-  const selectedMarkerId = useStore((s) => s.selectedMarkerId);
-  const isSelected = selectedMarkerId === flightId;
+// ── Satellite markers with orbital paths ──
+const SatelliteMarkers = memo(function SatelliteMarkers({ satellites, visible }: { satellites: SatelliteTrack[]; visible: boolean }) {
+  if (!visible || satellites.length === 0) return null;
 
-  useFrame(() => {
+  const limited = satellites.slice(0, MAX_MARKERS);
+
+  // Use instanced rendering if >50 satellites
+  if (limited.length > 50) {
+    return <SatelliteInstanced satellites={limited} />;
+  }
+
+  return (
+    <group>
+      {limited.map((sat) => (
+        <SatelliteSingle key={sat.noradId} sat={sat} />
+      ))}
+    </group>
+  );
+});
+
+function SatelliteInstanced({ satellites }: { satellites: SatelliteTrack[] }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    satellites.forEach((sat, i) => {
+      const alt = EARTH_RADIUS + sat.altitude * SAT_ALT_SCALE;
+      const pos = latLngToVec3(sat.latitude, sat.longitude, alt);
+      dummy.position.copy(pos);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [satellites, dummy]);
+
+  return (
+    <group>
+      <instancedMesh ref={meshRef} args={[undefined, undefined, satellites.length]}>
+        <sphereGeometry args={[0.015, 6, 6]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
+      </instancedMesh>
+      {/* Orbital paths for satellites with inclination and period */}
+      {satellites.filter(s => s.inclination != null && s.period != null).slice(0, 20).map(sat => (
+        <OrbitalPath key={sat.noradId} sat={sat} />
+      ))}
+    </group>
+  );
+}
+
+function SatelliteSingle({ sat }: { sat: SatelliteTrack }) {
+  const alt = EARTH_RADIUS + sat.altitude * SAT_ALT_SCALE;
+  const pos = latLngToVec3(sat.latitude, sat.longitude, alt);
+
+  return (
+    <group>
+      <mesh position={pos}>
+        <sphereGeometry args={[0.015, 6, 6]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
+      </mesh>
+      {sat.inclination != null && sat.period != null && <OrbitalPath sat={sat} />}
+    </group>
+  );
+}
+
+function OrbitalPath({ sat }: { sat: SatelliteTrack }) {
+  const lineObj = useMemo(() => {
+    const alt = EARTH_RADIUS + sat.altitude * SAT_ALT_SCALE;
+    const inc = (sat.inclination ?? 0) * DEG2RAD;
+    const points: THREE.Vector3[] = [];
+    const segments = 128;
+
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      const x = alt * Math.cos(angle);
+      const y = alt * Math.sin(angle) * Math.sin(inc);
+      const z = alt * Math.sin(angle) * Math.cos(inc);
+      points.push(new THREE.Vector3(x, y, z));
+    }
+
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineDashedMaterial({
+      color: '#4C90F0',
+      transparent: true,
+      opacity: 0.15,
+      dashSize: 0.3,
+      gapSize: 0.2,
+    });
+    const line = new THREE.Line(geo, mat);
+    line.computeLineDistances();
+    // Rotate by RAAN if available
+    if (sat.raan != null) {
+      line.rotation.y = sat.raan * DEG2RAD;
+    }
+    return line;
+  }, [sat]);
+
+  return <primitive object={lineObj} />;
+}
+
+// ── Seismic event markers ──
+const SeismicMarkers = memo(function SeismicMarkers({ events }: { events: SeismicEvent[] }) {
+  if (events.length === 0) return null;
+
+  return (
+    <group>
+      {events.slice(0, MAX_MARKERS).map((eq) => (
+        <SeismicPulse key={eq.id} eq={eq} />
+      ))}
+    </group>
+  );
+});
+
+function SeismicPulse({ eq }: { eq: SeismicEvent }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  const pos = useMemo(() => latLngToVec3(eq.latitude, eq.longitude, EARTH_RADIUS * 1.004), [eq.latitude, eq.longitude]);
+  const color = eq.magnitude >= 5 ? '#CD4246' : eq.magnitude >= 3 ? '#EC9A3C' : '#32A467';
+  const size = Math.max(0.01, eq.magnitude * 0.008);
+
+  useFrame(({ clock }) => {
+    // Pulsing dot
     if (meshRef.current) {
-      meshRef.current.lookAt(0, 0, 0);
+      const s = 1 + Math.sin(clock.getElapsedTime() * 3) * 0.2;
+      meshRef.current.scale.setScalar(s);
+    }
+    // Expanding ring for M4.0+
+    if (ringRef.current) {
+      const t = (clock.getElapsedTime() * 1.2) % 2;
+      const scale = 1 + t * 3;
+      const opacity = Math.max(0, 0.4 * (1 - t / 2));
+      ringRef.current.scale.setScalar(scale);
+      (ringRef.current.material as THREE.MeshBasicMaterial).opacity = opacity;
     }
   });
 
   return (
-    <mesh ref={meshRef} onClick={() => { selectMarker(flightId, 'flight'); sounds.marker(); }}>
-      <circleGeometry args={[isSelected ? 0.04 : 0.025, 8]} />
-      <meshBasicMaterial color={color} transparent opacity={isSelected ? 1 : 0.85} />
-    </mesh>
-  );
-}
-
-function AltitudeLine({ lat, lng, altitude, color }: { lat: number; lng: number; altitude: number; color: string }) {
-  const geo = useMemo(() => {
-    const surface = latLngToVec3(lat, lng, EARTH_RADIUS);
-    const airPos = latLngToVec3(lat, lng, altitude);
-    return new THREE.BufferGeometry().setFromPoints([surface, airPos]);
-  }, [lat, lng, altitude]);
-
-  return (
-    <primitive object={new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.15 }))} />
-  );
-}
-
-// ── Satellite markers ──
-function SatelliteMarkers({ satellites, visible }: { satellites: SatelliteTrack[]; visible: boolean }) {
-  if (!visible) return null;
-
-  return (
-    <group>
-      {satellites.map((sat) => {
-        const alt = EARTH_RADIUS + sat.altitude * SAT_ALT_SCALE;
-        const pos = latLngToVec3(sat.latitude, sat.longitude, alt);
-        return (
-          <group key={sat.noradId} position={pos}>
-            <mesh>
-              <sphereGeometry args={[0.015, 6, 6]} />
-              <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
-            </mesh>
-            {/* Orbit ring hint */}
-            <mesh>
-              <ringGeometry args={[0.03, 0.04, 16]} />
-              <meshBasicMaterial color="#4C90F0" transparent opacity={0.2} side={THREE.DoubleSide} />
-            </mesh>
-          </group>
-        );
-      })}
+    <group position={pos}>
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[size, 8, 8]} />
+        <meshBasicMaterial color={color} transparent opacity={0.85} />
+      </mesh>
+      {eq.magnitude >= 4.0 && (
+        <mesh ref={ringRef}>
+          <ringGeometry args={[size * 1.5, size * 2.2, 24]} />
+          <meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} />
+        </mesh>
+      )}
     </group>
   );
 }
 
-// ── Naval markers ──
-function NavalMarkers({ naval, visible }: { naval: NavalTrack[]; visible: boolean }) {
+// ── Cyber threat markers with arc lines ──
+const CyberMarkers = memo(function CyberMarkers({ cyber, visible }: { cyber: CyberThreat[]; visible: boolean }) {
   if (!visible) return null;
+
+  const filtered = useMemo(() => cyber.filter(c => c.latitude != null && c.longitude != null), [cyber]);
 
   return (
     <group>
-      {naval.map((nv) => {
+      {filtered.slice(0, MAX_MARKERS).map((ct) => (
+        <CyberDot key={ct.id} ct={ct} />
+      ))}
+      <CyberArcs cyber={filtered} />
+    </group>
+  );
+});
+
+function CyberDot({ ct }: { ct: CyberThreat }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const pos = useMemo(() => latLngToVec3(ct.latitude!, ct.longitude!, EARTH_RADIUS * 1.005), [ct.latitude, ct.longitude]);
+  const color = ct.severity === 'critical' ? SEVERITY_COLORS.critical
+    : ct.severity === 'high' ? SEVERITY_COLORS.high
+    : ct.severity === 'medium' ? SEVERITY_COLORS.medium
+    : SEVERITY_COLORS.low;
+
+  useFrame(({ clock }) => {
+    if (meshRef.current) {
+      const s = 1 + Math.sin(clock.getElapsedTime() * 4) * 0.3;
+      meshRef.current.scale.setScalar(s);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={pos}>
+      <sphereGeometry args={[0.018, 8, 8]} />
+      <meshBasicMaterial color={color} transparent opacity={0.7} />
+    </mesh>
+  );
+}
+
+const CyberArcs = memo(function CyberArcs({ cyber }: { cyber: CyberThreat[] }) {
+  const arcObjects = useMemo(() => {
+    return cyber.slice(0, 20).map((ct) => {
+      const start = latLngToVec3(ct.latitude!, ct.longitude!, EARTH_RADIUS * 1.003);
+      // Pick a random major city as target
+      const city = MAJOR_CITIES[Math.floor(Math.abs(ct.id.charCodeAt(0)) % MAJOR_CITIES.length)];
+      const end = latLngToVec3(city.lat, city.lng, EARTH_RADIUS * 1.003);
+      const mid = start.clone().add(end).multiplyScalar(0.5).normalize().multiplyScalar(EARTH_RADIUS * 1.15);
+
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+      const points = curve.getPoints(40);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+
+      const color = ct.severity === 'critical' ? SEVERITY_COLORS.critical
+        : ct.severity === 'high' ? SEVERITY_COLORS.high
+        : SEVERITY_COLORS.low;
+
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.2 });
+      return { line: new THREE.Line(geo, mat), id: ct.id };
+    });
+  }, [cyber]);
+
+  return (
+    <group>
+      {arcObjects.map(({ line, id }) => (
+        <primitive key={id} object={line} />
+      ))}
+    </group>
+  );
+});
+
+// ── Naval markers ──
+const NavalMarkers = memo(function NavalMarkers({ naval, visible }: { naval: NavalTrack[]; visible: boolean }) {
+  if (!visible || naval.length === 0) return null;
+
+  return (
+    <group>
+      {naval.slice(0, MAX_MARKERS).map((nv) => {
         const pos = latLngToVec3(nv.latitude, nv.longitude, EARTH_RADIUS * 1.002);
-        const color = nv.type === 'military' ? '#4C90F0' : '#5F6B7C';
+        const color = nv.type === 'military' ? '#4C90F0' : '#738091';
         return (
           <mesh key={nv.id} position={pos}>
             <sphereGeometry args={[0.012, 6, 6]} />
@@ -319,91 +478,9 @@ function NavalMarkers({ naval, visible }: { naval: NavalTrack[]; visible: boolea
       })}
     </group>
   );
-}
+});
 
-// ── Cyber threat markers ──
-function CyberMarkers({ cyber, visible }: { cyber: CyberThreat[]; visible: boolean }) {
-  if (!visible) return null;
-
-  return (
-    <group>
-      {cyber.filter((c) => c.latitude && c.longitude).map((ct) => {
-        const pos = latLngToVec3(ct.latitude!, ct.longitude!, EARTH_RADIUS * 1.005);
-        const color = ct.severity === 'critical' ? '#CD4246' : ct.severity === 'high' ? '#E76A6E' : '#4C90F0';
-        return (
-          <CyberPulse key={ct.id} position={pos} color={color} />
-        );
-      })}
-    </group>
-  );
-}
-
-function CyberPulse({ position, color }: { position: THREE.Vector3; color: string }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      const s = 1 + Math.sin(clock.getElapsedTime() * 3) * 0.3;
-      meshRef.current.scale.setScalar(s);
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} position={position}>
-      <sphereGeometry args={[0.018, 8, 8]} />
-      <meshBasicMaterial color={color} transparent opacity={0.6} />
-    </mesh>
-  );
-}
-
-// ── Seismic event markers ──
-function SeismicMarkers({ events }: { events: SeismicEvent[] }) {
-  return (
-    <group>
-      {events.map((eq) => {
-        const pos = latLngToVec3(eq.latitude, eq.longitude, EARTH_RADIUS * 1.004);
-        const color = eq.magnitude >= 4.0 ? '#E76A6E' : eq.magnitude >= 2.5 ? '#EC9A3C' : '#32A467';
-        const size = Math.max(0.01, eq.magnitude * 0.008);
-        return (
-          <SeismicPulse key={eq.id} position={pos} color={color} size={size} magnitude={eq.magnitude} />
-        );
-      })}
-    </group>
-  );
-}
-
-function SeismicPulse({ position, color, size, magnitude }: { position: THREE.Vector3; color: string; size: number; magnitude: number }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (ringRef.current) {
-      const t = (clock.getElapsedTime() * 1.5) % 2;
-      const scale = 1 + t * 2;
-      const opacity = Math.max(0, 0.4 * (1 - t / 2));
-      ringRef.current.scale.setScalar(scale);
-      (ringRef.current.material as THREE.MeshBasicMaterial).opacity = opacity;
-    }
-  });
-
-  return (
-    <group position={position}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[size, 8, 8]} />
-        <meshBasicMaterial color={color} transparent opacity={0.8} />
-      </mesh>
-      {/* Expanding ring for earthquakes >= 3.0 */}
-      {magnitude >= 3.0 && (
-        <mesh ref={ringRef}>
-          <ringGeometry args={[size * 1.5, size * 2, 16]} />
-          <meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} />
-        </mesh>
-      )}
-    </group>
-  );
-}
-
-// ── Camera controller with flyTo ──
+// ── Camera controller with flyTo animation ──
 function CameraController() {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
@@ -438,6 +515,10 @@ function CameraController() {
     camera.position.lerpVectors(animFrom.current, animTo.current, eased);
     camera.lookAt(0, 0, 0);
 
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+    }
+
     if (t >= 1) animating.current = false;
   });
 
@@ -445,8 +526,8 @@ function CameraController() {
     <OrbitControls
       ref={controlsRef}
       enablePan={false}
-      minDistance={EARTH_RADIUS * 1.1}
-      maxDistance={EARTH_RADIUS * 6}
+      minDistance={6.5}
+      maxDistance={30}
       enableDamping
       dampingFactor={0.05}
       rotateSpeed={0.5}
@@ -455,90 +536,7 @@ function CameraController() {
   );
 }
 
-// ── Connection arcs (cyber attack origin → Italy) ──
-function ConnectionArcs({ cyber, visible }: { cyber: CyberThreat[]; visible: boolean }) {
-  if (!visible) return null;
-
-  const arcs = useMemo(() => {
-    return cyber
-      .filter((c) => c.latitude && c.longitude)
-      .slice(0, 15)
-      .map((ct) => {
-        const start = latLngToVec3(ct.latitude!, ct.longitude!, EARTH_RADIUS * 1.003);
-        const end = latLngToVec3(ITALY_LAT, ITALY_LNG, EARTH_RADIUS * 1.003);
-        const mid = start.clone().add(end).multiplyScalar(0.5).normalize().multiplyScalar(EARTH_RADIUS * 1.15);
-
-        const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-        const points = curve.getPoints(40);
-        const geo = new THREE.BufferGeometry().setFromPoints(points);
-        const color = ct.severity === 'critical' ? '#CD4246' : ct.severity === 'high' ? '#E76A6E' : '#4C90F0';
-        return { geo, color, id: ct.id };
-      });
-  }, [cyber]);
-
-  return (
-    <group>
-      {arcs.map(({ geo, color, id }) => (
-        <primitive key={id} object={new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 }))} />
-      ))}
-    </group>
-  );
-}
-
-// ── Animated data flow particles along arcs ──
-function DataFlowParticles() {
-  const particlesRef = useRef<THREE.Points>(null);
-  const count = 200;
-
-  const { positions, velocities } = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const vel = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const phi = Math.random() * Math.PI * 2;
-      const theta = Math.random() * Math.PI;
-      const r = EARTH_RADIUS * 1.01 + Math.random() * 0.3;
-      pos[i * 3] = r * Math.sin(theta) * Math.cos(phi);
-      pos[i * 3 + 1] = r * Math.cos(theta);
-      pos[i * 3 + 2] = r * Math.sin(theta) * Math.sin(phi);
-      vel[i * 3] = (Math.random() - 0.5) * 0.002;
-      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.002;
-      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
-    }
-    return { positions: pos, velocities: vel };
-  }, []);
-
-  useFrame(() => {
-    if (!particlesRef.current) return;
-    const pos = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < count; i++) {
-      pos.array[i * 3] += velocities[i * 3];
-      pos.array[i * 3 + 1] += velocities[i * 3 + 1];
-      pos.array[i * 3 + 2] += velocities[i * 3 + 2];
-
-      // Keep near surface
-      const v = new THREE.Vector3(pos.array[i * 3], pos.array[i * 3 + 1], pos.array[i * 3 + 2]);
-      const dist = v.length();
-      if (dist < EARTH_RADIUS * 1.005 || dist > EARTH_RADIUS * 1.4) {
-        v.normalize().multiplyScalar(EARTH_RADIUS * 1.02);
-        pos.array[i * 3] = v.x;
-        pos.array[i * 3 + 1] = v.y;
-        pos.array[i * 3 + 2] = v.z;
-      }
-    }
-    pos.needsUpdate = true;
-  });
-
-  return (
-    <points ref={particlesRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial color="#4C90F0" size={0.015} transparent opacity={0.3} sizeAttenuation />
-    </points>
-  );
-}
-
-// ── Main scene ──
+// ── Main 3D scene ──
 function Scene() {
   const flights = useStore((s) => s.flights.data);
   const cyber = useStore((s) => s.cyber.data);
@@ -550,10 +548,9 @@ function Scene() {
   return (
     <>
       {/* Lighting */}
-      <ambientLight intensity={0.15} />
-      <directionalLight position={[10, 8, 5]} intensity={0.8} color="#e8edf5" />
-      <directionalLight position={[-5, -3, -8]} intensity={0.2} color="#4C90F0" />
-      <pointLight position={[0, 0, 0]} intensity={0.1} color="#1a2744" />
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 8, 5]} intensity={1.0} color="#ffffff" />
+      <directionalLight position={[-5, -3, -8]} intensity={0.15} color="#4C90F0" />
 
       {/* Starfield */}
       <Stars radius={100} depth={60} count={4000} factor={3} saturation={0.1} speed={0.3} />
@@ -561,28 +558,39 @@ function Scene() {
       {/* Earth */}
       <EarthGlobe />
       <CountryBorders />
-      <ItalyHighlight />
 
       {/* Data layers */}
       <FlightMarkers flights={flights} visible={mapLayers.flights} />
       <NavalMarkers naval={naval} visible={mapLayers.naval} />
       <CyberMarkers cyber={cyber} visible={mapLayers.cyber} />
-      <ConnectionArcs cyber={cyber} visible={mapLayers.cyber} />
       <SatelliteMarkers satellites={satellites} visible={mapLayers.satellites} />
       <SeismicMarkers events={seismic} />
-
-      {/* Ambient particles */}
-      <DataFlowParticles />
 
       {/* Camera */}
       <CameraController />
 
       {/* Post-processing */}
       <EffectComposer>
-        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.9} intensity={0.4} />
-        <Vignette offset={0.3} darkness={0.7} />
+        <Bloom luminanceThreshold={0.5} luminanceSmoothing={0.9} intensity={0.5} />
+        <Vignette offset={0.3} darkness={0.6} />
       </EffectComposer>
     </>
+  );
+}
+
+// ── Slider control for sensor settings ──
+function SliderCtrl({ label, value, onChange, max = 1 }: { label: string; value: number; onChange: (v: number) => void; max?: number }) {
+  return (
+    <div>
+      <div className="flex justify-between font-mono text-[8px] mb-0.5">
+        <span style={{ color: 'var(--text-dim)' }}>{label}</span>
+        <span style={{ color: '#fff' }}>{value.toFixed(2)}</span>
+      </div>
+      <input type="range" min="0" max={max} step="0.01" value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-1 rounded-full appearance-none cursor-pointer"
+        style={{ background: `linear-gradient(to right, var(--accent) ${(value / max) * 100}%, var(--bg-card) ${(value / max) * 100}%)` }} />
+    </div>
   );
 }
 
@@ -593,13 +601,17 @@ export default function TacticalMap() {
   const shaderSettings = useStore((s) => s.shaderSettings);
   const setShaderMode = useStore((s) => s.setShaderMode);
   const setShaderSetting = useStore((s) => s.setShaderSetting);
+  const flyTo = useStore((s) => s.flyTo);
   const flights = useStore((s) => s.flights.data);
   const naval = useStore((s) => s.naval.data);
   const cyber = useStore((s) => s.cyber.data);
   const satellites = useStore((s) => s.satellites.data);
   const seismic = useStore((s) => s.seismic.data);
   const [showControls, setShowControls] = useState(false);
+  const [poiToast, setPoiToast] = useState<string | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Marker count
   const markerCount = useMemo(() => {
     let c = 0;
     if (mapLayers.flights) c += flights.length;
@@ -610,7 +622,51 @@ export default function TacticalMap() {
     return c;
   }, [flights, naval, cyber, satellites, seismic, mapLayers]);
 
-  const initialCameraPos = useMemo(() => getItalyCameraPos(), []);
+  const activeLayers = useMemo(() => Object.values(mapLayers).filter(Boolean).length, [mapLayers]);
+  const totalLayers = useMemo(() => Object.keys(mapLayers).length, [mapLayers]);
+
+  const initialCameraPos = useMemo(() => getInitialCameraPos(), []);
+
+  // POI keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const key = e.key;
+      if (key >= '1' && key <= '8') {
+        const idx = parseInt(key) - 1;
+        if (idx < POIS.length) {
+          const poi = POIS[idx];
+          flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom });
+          sounds.marker();
+
+          // Show toast
+          setPoiToast(`${key}: ${poi.name}`);
+          if (toastTimeout.current) clearTimeout(toastTimeout.current);
+          toastTimeout.current = setTimeout(() => setPoiToast(null), 2000);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
+  }, [flyTo]);
+
+  // CSS filter based on sensor mode
+  const canvasFilter = useMemo(() => {
+    const filters: string[] = [];
+    if (shaderSettings.mode === 'nvg') filters.push('hue-rotate(80deg) saturate(3) brightness(1.2)');
+    if (shaderSettings.mode === 'flir') filters.push('hue-rotate(190deg) saturate(2) contrast(1.3)');
+    if (shaderSettings.mode === 'crt') filters.push('contrast(1.2) brightness(0.9)');
+    if (shaderSettings.pixelation > 0) filters.push(`blur(${shaderSettings.pixelation}px)`);
+    if (shaderSettings.bloom > 0) filters.push(`brightness(${1 + shaderSettings.bloom * 0.5})`);
+    if (shaderSettings.sharpening > 0) filters.push(`contrast(${1 + shaderSettings.sharpening * 0.3})`);
+    return filters.length > 0 ? filters.join(' ') : undefined;
+  }, [shaderSettings]);
 
   return (
     <div className="relative flex-1 h-full" style={{ background: '#050810' }}>
@@ -628,16 +684,7 @@ export default function TacticalMap() {
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.2,
         }}
-        style={{
-          filter: [
-            shaderSettings.mode === 'nvg' ? 'hue-rotate(80deg) saturate(3) brightness(1.2)' : '',
-            shaderSettings.mode === 'flir' ? 'hue-rotate(190deg) saturate(2) contrast(1.3)' : '',
-            shaderSettings.mode === 'crt' ? 'contrast(1.2) brightness(0.9)' : '',
-            shaderSettings.pixelation > 0 ? `blur(${shaderSettings.pixelation}px)` : '',
-            shaderSettings.bloom > 0 ? `brightness(${1 + shaderSettings.bloom * 0.5})` : '',
-            shaderSettings.sharpening > 0 ? `contrast(${1 + shaderSettings.sharpening * 0.3})` : '',
-          ].filter(Boolean).join(' ') || undefined,
-        }}
+        style={{ filter: canvasFilter }}
       >
         <Scene />
       </Canvas>
@@ -659,18 +706,42 @@ export default function TacticalMap() {
         <div className="absolute inset-y-0 right-0 w-12" style={{ background: 'linear-gradient(to left, #050810, transparent)' }} />
       </div>
 
-      {/* Layer controls */}
+      {/* POI toast indicator */}
+      {poiToast && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[3] glass-panel rounded-lg px-4 py-2 font-mono text-[11px] font-bold tracking-wider animate-pulse"
+          style={{ color: 'var(--accent)', borderColor: 'var(--accent)', borderWidth: 1 }}>
+          NAVIGATING TO {poiToast}
+        </div>
+      )}
+
+      {/* ── HUD: TOP-LEFT — Layer toggle buttons ── */}
       <div className="absolute top-3 left-3 z-[2] glass-panel flex items-center gap-2 rounded-lg px-3 py-2">
-        <span className="mr-1 font-mono text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Layer</span>
-        {(['flights', 'naval', 'cyber', 'satellites'] as const).map((layer) => (
+        <span className="mr-1 font-mono text-[8px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Layers</span>
+        {(['flights', 'naval', 'cyber', 'satellites', 'traffic'] as const).map((layer) => (
           <button key={layer} onClick={() => { toggleMapLayer(layer); sounds.toggle(); }}
             className={`layer-btn text-[9px] px-2 py-0.5 ${mapLayers[layer] ? 'active' : ''}`}>
-            {layer === 'flights' ? 'Voli' : layer === 'naval' ? 'Navi' : layer === 'satellites' ? 'Sat' : 'Cyber'}
+            {layer === 'flights' ? 'Flights' : layer === 'naval' ? 'Naval' : layer === 'satellites' ? 'Sat' : layer === 'traffic' ? 'Traffic' : 'Cyber'}
           </button>
         ))}
       </div>
 
-      {/* Sensor mode */}
+      {/* ── HUD: TOP-CENTER — POI quick-jump bar ── */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2] glass-panel rounded-lg px-3 py-1.5">
+        <div className="flex items-center gap-2 font-mono text-[8px]">
+          <span className="font-bold uppercase tracking-[0.12em] mr-1" style={{ color: 'var(--text-muted)' }}>POI</span>
+          {POIS.map((poi) => (
+            <button key={poi.id}
+              onClick={() => { flyTo({ lat: poi.lat, lng: poi.lng, zoom: poi.zoom }); sounds.marker(); }}
+              className="hover:text-white transition-colors px-1"
+              style={{ color: 'var(--text-dim)' }}
+              title={poi.description}>
+              <span style={{ color: 'var(--accent)' }}>{poi.key}</span>:{poi.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── HUD: TOP-RIGHT — Sensor mode button + settings panel ── */}
       <div className="absolute top-3 right-3 z-[2]">
         <button onClick={() => { setShowControls(!showControls); sounds.click(); }}
           className="glass-panel rounded-lg px-3 py-2 font-mono text-[9px] font-bold uppercase tracking-wider"
@@ -698,47 +769,48 @@ export default function TacticalMap() {
         )}
       </div>
 
-      {/* Bottom HUD */}
+      {/* ── HUD: BOTTOM-LEFT — Telemetry bar ── */}
       <div className="absolute bottom-3 left-3 z-[2] glass-panel rounded-lg px-3.5 py-2">
         <div className="flex items-center gap-3 font-mono text-[9px]" style={{ color: 'var(--text-dim)' }}>
-          <span style={{ color: 'var(--accent)' }}>3D GLOBE VIEW</span>
+          <span style={{ color: 'var(--accent)' }}>3D GLOBE</span>
           <span style={{ color: 'var(--border-subtle)' }}>|</span>
           <span>MRK: <span style={{ color: '#fff' }}>{markerCount}</span></span>
           <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <span>LAYERS: <span style={{ color: '#fff' }}>{Object.values(mapLayers).filter(Boolean).length}/5</span></span>
-          {shaderSettings.mode !== 'none' && (
-            <>
-              <span style={{ color: 'var(--border-subtle)' }}>|</span>
-              <span style={{ color: shaderSettings.mode === 'nvg' ? 'var(--nvg-green)' : 'var(--accent)' }}>SENSOR: {shaderSettings.mode.toUpperCase()}</span>
-            </>
-          )}
+          <span>LAYERS: <span style={{ color: '#fff' }}>{activeLayers}/{totalLayers}</span></span>
+          <span style={{ color: 'var(--border-subtle)' }}>|</span>
+          <span>SENSOR: <span style={{ color: shaderSettings.mode !== 'none' ? 'var(--accent)' : '#fff' }}>{shaderSettings.mode.toUpperCase()}</span></span>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-3 right-14 z-[2] glass-panel rounded-lg px-3 py-1.5">
+      {/* ── HUD: BOTTOM-RIGHT — Color legend ── */}
+      <div className="absolute bottom-3 right-3 z-[2] glass-panel rounded-lg px-3 py-1.5">
         <div className="flex items-center gap-3 font-mono text-[8px]">
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: '#4C90F0', boxShadow: '0 0 6px #4C90F0' }} /><span style={{ color: 'var(--text-dim)' }}>CIV</span></span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: '#EC9A3C', boxShadow: '0 0 6px #EC9A3C' }} /><span style={{ color: 'var(--text-dim)' }}>MIL</span></span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: '#fff', boxShadow: '0 0 6px rgba(45,114,210,0.4)' }} /><span style={{ color: 'var(--text-dim)' }}>SAT</span></span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: '#E76A6E', boxShadow: '0 0 6px #E76A6E' }} /><span style={{ color: 'var(--text-dim)' }}>SEIS</span></span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#4C90F0', boxShadow: '0 0 6px #4C90F0' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Commercial</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#EC9A3C', boxShadow: '0 0 6px #EC9A3C' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Military</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#738091', boxShadow: '0 0 6px #738091' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Cargo</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#fff', boxShadow: '0 0 6px rgba(45,114,210,0.4)' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Satellite</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#CD4246', boxShadow: '0 0 6px #CD4246' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Seismic</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#E76A6E', boxShadow: '0 0 6px #E76A6E' }} />
+            <span style={{ color: 'var(--text-dim)' }}>Cyber</span>
+          </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SliderCtrl({ label, value, onChange, max = 1 }: { label: string; value: number; onChange: (v: number) => void; max?: number }) {
-  return (
-    <div>
-      <div className="flex justify-between font-mono text-[8px] mb-0.5">
-        <span style={{ color: 'var(--text-dim)' }}>{label}</span>
-        <span style={{ color: '#fff' }}>{value.toFixed(2)}</span>
-      </div>
-      <input type="range" min="0" max={max} step="0.01" value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 rounded-full appearance-none cursor-pointer"
-        style={{ background: `linear-gradient(to right, var(--accent) ${(value / max) * 100}%, var(--bg-card) ${(value / max) * 100}%)` }} />
     </div>
   );
 }

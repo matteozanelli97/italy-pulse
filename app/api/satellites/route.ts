@@ -3,7 +3,7 @@ import type { SatelliteTrack } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-// CelesTrak public TLE data — compute satellite positions above Italy
+// CelesTrak public TLE data — compute satellite positions globally
 const TLE_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json';
 
 const SAT_TYPES: Record<string, SatelliteTrack['type']> = {
@@ -52,47 +52,47 @@ function estimatePosition(tle: { MEAN_MOTION: number; INCLINATION: number; RA_OF
   const a = 42241.122 / Math.pow(n, 2 / 3); // semi-major axis in km (approx)
   const alt = a - 6371; // altitude above Earth surface
 
-  return { lat, lng: normalizedLng, alt: Math.max(100, alt), velocity: n * 2 * Math.PI * a / 86400 };
+  return { lat, lng: normalizedLng, alt: Math.max(100, alt), velocity: n * 2 * Math.PI * a / 86400, period };
 }
 
 export async function GET() {
   try {
     const res = await fetch(TLE_URL, {
       next: { revalidate: 300 },
-      headers: { 'User-Agent': 'ItalyPulse/1.0' },
+      headers: { 'User-Agent': 'Pulse/1.0' },
     });
 
     if (!res.ok) throw new Error(`CelesTrak ${res.status}`);
     const data = await res.json();
 
-    // Filter satellites near Italy and limit count
-    const italySats: SatelliteTrack[] = [];
+    // Global — take first 150 satellites regardless of position
+    const satellites: SatelliteTrack[] = [];
     const tles = Array.isArray(data) ? data : [];
 
     for (const tle of tles) {
-      if (italySats.length >= 80) break;
+      if (satellites.length >= 150) break;
       if (!tle.MEAN_MOTION || !tle.NORAD_CAT_ID) continue;
 
       try {
         const pos = estimatePosition(tle);
-        // Filter to roughly above/near Italy (wide area)
-        if (pos.lat >= 30 && pos.lat <= 55 && pos.lng >= -5 && pos.lng <= 25) {
-          italySats.push({
-            id: `sat-${tle.NORAD_CAT_ID}`,
-            name: tle.OBJECT_NAME || `SAT-${tle.NORAD_CAT_ID}`,
-            noradId: tle.NORAD_CAT_ID,
-            latitude: pos.lat,
-            longitude: pos.lng,
-            altitude: pos.alt,
-            velocity: pos.velocity,
-            type: classifySat(tle.OBJECT_NAME || ''),
-            country: getCountry(tle.OBJECT_NAME || ''),
-          });
-        }
+        satellites.push({
+          id: `sat-${tle.NORAD_CAT_ID}`,
+          name: tle.OBJECT_NAME || `SAT-${tle.NORAD_CAT_ID}`,
+          noradId: tle.NORAD_CAT_ID,
+          latitude: pos.lat,
+          longitude: pos.lng,
+          altitude: pos.alt,
+          velocity: pos.velocity,
+          type: classifySat(tle.OBJECT_NAME || ''),
+          country: getCountry(tle.OBJECT_NAME || ''),
+          inclination: tle.INCLINATION ?? 0,
+          raan: tle.RA_OF_ASC_NODE ?? 0,
+          period: pos.period,
+        });
       } catch { /* skip malformed */ }
     }
 
-    return NextResponse.json({ satellites: italySats, updatedAt: new Date().toISOString() });
+    return NextResponse.json({ satellites, updatedAt: new Date().toISOString() });
   } catch (e) {
     console.error('Satellites API error:', e);
     return NextResponse.json({ satellites: [], updatedAt: new Date().toISOString(), error: true }, { status: 502 });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MONITORED_CITIES } from '@/lib/constants';
+import { GLOBAL_CITIES } from '@/lib/constants';
 import type { AirQualityStation } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     // Use Open-Meteo Air Quality API (free, no key needed)
-    const lats = MONITORED_CITIES.slice(0, 10).map((c) => c.lat).join(',');
-    const lngs = MONITORED_CITIES.slice(0, 10).map((c) => c.lng).join(',');
+    const lats = GLOBAL_CITIES.slice(0, 10).map((c) => c.lat).join(',');
+    const lngs = GLOBAL_CITIES.slice(0, 10).map((c) => c.lng).join(',');
 
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lngs}&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone&timezone=Europe/Rome`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lngs}&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone&timezone=auto`;
 
     const res = await fetch(url, { next: { revalidate: 600 } });
     if (!res.ok) throw new Error(`Air Quality API ${res.status}`);
@@ -24,9 +24,9 @@ export async function GET() {
         const dominant = getDominant(c);
         return {
           id: `aq-${i}`,
-          name: MONITORED_CITIES[i]?.name ?? `Station ${i}`,
-          latitude: MONITORED_CITIES[i]?.lat ?? 0,
-          longitude: MONITORED_CITIES[i]?.lng ?? 0,
+          name: GLOBAL_CITIES[i]?.name ?? `Station ${i}`,
+          latitude: GLOBAL_CITIES[i]?.lat ?? 0,
+          longitude: GLOBAL_CITIES[i]?.lng ?? 0,
           aqi,
           level: aqiLevel(aqi),
           dominantPollutant: dominant,

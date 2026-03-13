@@ -12,7 +12,7 @@ export async function GET() {
     try {
       // Use a publicly available European energy price proxy
       const res = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=41.9&longitude=12.5&current=temperature_2m&timezone=Europe/Rome',
+        'https://api.open-meteo.com/v1/forecast?latitude=40.7&longitude=-74.0&current=temperature_2m&timezone=auto',
         { next: { revalidate: 300 } }
       );
       if (res.ok) {

@@ -8,7 +8,7 @@ const STATUS_COLORS: Record<string, string> = {
   regolare: '#32A467', rallentato: '#EC9A3C', critico: '#E76A6E', sospeso: '#CD4246',
 };
 const STATUS_LABELS: Record<string, string> = {
-  regolare: 'REGOLARE', rallentato: 'RALLENTATO', critico: 'CRITICO', sospeso: 'SOSPESO',
+  regolare: 'NORMAL', rallentato: 'DELAYED', critico: 'CRITICAL', sospeso: 'SUSPENDED',
 };
 
 type TabId = 'highway' | 'train' | 'flight' | 'port';
@@ -31,10 +31,10 @@ export default function MobilityModule() {
   if (alerts.length === 0) return <Init />;
 
   const tabs: Array<{ id: TabId; label: string; icon: string }> = [
-    { id: 'highway', label: 'Strade', icon: '🛣️' },
-    { id: 'train', label: 'Treni', icon: '🚄' },
-    { id: 'flight', label: 'Aerei', icon: '✈️' },
-    { id: 'port', label: 'Porti', icon: '⚓' },
+    { id: 'highway', label: 'Roads', icon: '🛣️' },
+    { id: 'train', label: 'Rail', icon: '🚄' },
+    { id: 'flight', label: 'Airports', icon: '✈️' },
+    { id: 'port', label: 'Ports', icon: '⚓' },
   ];
 
   const filtered = getTabAlerts(alerts, tab);
@@ -87,10 +87,10 @@ export default function MobilityModule() {
               {a.route && <p className="text-[9px] font-mono mt-0.5" style={{ color: 'var(--text-dim)' }}>{a.route}</p>}
               {isExpanded && (
                 <div className="mt-1.5 pt-1.5 border-t space-y-0.5 text-[9px]" style={{ borderColor: 'var(--border-dim)' }}>
-                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Tipo</span><span className="font-mono" style={{ color: '#fff' }}>{a.type}</span></div>
-                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Gravità</span><span className="font-mono" style={{ color: statusColor }}>{a.severity}</span></div>
-                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Ultimo aggiornamento</span><span className="font-mono" style={{ color: '#fff' }}>{new Date(a.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                  {a.route && <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Percorso</span><span className="font-mono" style={{ color: '#fff' }}>{a.route}</span></div>}
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Type</span><span className="font-mono" style={{ color: '#fff' }}>{a.type}</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Severity</span><span className="font-mono" style={{ color: statusColor }}>{a.severity}</span></div>
+                  <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Last update</span><span className="font-mono" style={{ color: '#fff' }}>{new Date(a.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                  {a.route && <div className="flex justify-between"><span style={{ color: 'var(--text-dim)' }}>Route</span><span className="font-mono" style={{ color: '#fff' }}>{a.route}</span></div>}
                 </div>
               )}
             </button>
@@ -105,7 +105,7 @@ function Init() {
   return (
     <div className="flex items-center gap-2 py-2">
       <div className="h-2 w-2 rounded-full animate-glow-breathe" style={{ background: 'var(--accent)' }} />
-      <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Monitoraggio viabilità<span className="init-dots" /></span>
+      <span className="text-[11px] uppercase tracking-wider font-mono" style={{ color: 'var(--text-dim)' }}>Monitoring transport<span className="init-dots" /></span>
     </div>
   );
 }

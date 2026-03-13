@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const { titles, category } = await req.json();
     if (!titles || !Array.isArray(titles) || titles.length === 0) {
-      return NextResponse.json({ summary: 'Nessuna notizia disponibile per questa categoria.' });
+      return NextResponse.json({ summary: 'No news available for this category.' });
     }
 
     const categoryLabel = ({

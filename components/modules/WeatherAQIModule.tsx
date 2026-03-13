@@ -144,7 +144,7 @@ export default function WeatherAQIModule() {
           <line x1="10" y1="10" x2="13" y2="13" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
         <input value={search} onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Cerca qualsiasi città italiana..."
+          placeholder="Search any city worldwide..."
           className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[var(--text-muted)]" style={{ color: 'var(--text-secondary)' }} />
         {searching && <span className="text-[9px] font-mono animate-pulse" style={{ color: 'var(--text-dim)' }}>...</span>}
         {search && <button onClick={() => { setSearch(''); setSearchResults([]); }} className="text-[12px]" style={{ color: 'var(--text-dim)' }}>×</button>}
@@ -159,8 +159,8 @@ export default function WeatherAQIModule() {
       )}
 
       {mainResults.map((w) => <CityRow key={w.city} w={w} aqi={getAqi(w.city)} expanded={expanded} setExpanded={setExpanded} flyTo={flyTo} pinned={pinnedCities.has(w.city)} togglePin={(city) => togglePin(city, w)} />)}
-      {mainResults.length === 0 && pinnedData.length === 0 && !searching && <p className="text-[11px] text-center py-2" style={{ color: 'var(--text-dim)' }}>Nessun risultato</p>}
-      {mainResults.length === 0 && pinnedData.length === 0 && searching && <p className="text-[11px] text-center py-2 animate-pulse" style={{ color: 'var(--text-dim)' }}>Ricerca in corso...</p>}
+      {mainResults.length === 0 && pinnedData.length === 0 && !searching && <p className="text-[11px] text-center py-2" style={{ color: 'var(--text-dim)' }}>No results</p>}
+      {mainResults.length === 0 && pinnedData.length === 0 && searching && <p className="text-[11px] text-center py-2 animate-pulse" style={{ color: 'var(--text-dim)' }}>Searching...</p>}
     </div>
   );
 }

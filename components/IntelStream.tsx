@@ -149,7 +149,7 @@ export default function IntelStream() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>Nessun risultato</span>
+            <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>No results</span>
           </div>
         ) : (
           <div>
@@ -190,8 +190,8 @@ function NI({ item, exp, onToggle, pinned, onPin }: {
   const d = new Date(item.publishedAt);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
-  const timeStr = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = isToday ? timeStr : `${d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
+  const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = isToday ? timeStr : `${d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' })} ${timeStr}`;
 
   const favicon = SOURCE_FAVICONS[item.source];
   const desc = cleanDescription(item.description);

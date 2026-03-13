@@ -1,5 +1,5 @@
 // ============================================================
-// PULSE — Zustand Global State Store
+// SALA OPERATIVA — Zustand Global State Store
 // ============================================================
 
 import { create } from 'zustand';
@@ -115,11 +115,11 @@ export const useStore = create<AppStore>((set, get) => ({
   setSearchedWeather: (data) => set({ searchedWeather: data }),
 
   searchQuery: '',
-  marketRegion: 'US',
+  marketRegion: 'IT',
   mapLayers: { flights: true, naval: true, cyber: true, satellites: false, traffic: false },
   shaderSettings: { mode: 'none', sensitivity: 0.5, pixelation: 0, bloom: 0, sharpening: 0 },
 
-  visibleModules: { markets: true, weather: true, seismic: true, services: true, livecams: true, flights: true },
+  visibleModules: { markets: true, weather: true, seismic: true, services: true, livecams: true, flights: true, political: true },
   toggleModule: (id) => set((s) => ({ visibleModules: { ...s.visibleModules, [id]: !s.visibleModules[id] } })),
 
   openWebcams: [],

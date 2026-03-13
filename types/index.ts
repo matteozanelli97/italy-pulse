@@ -1,5 +1,5 @@
 // ============================================================
-// PULSE — Global OSINT Dashboard Types
+// SALA OPERATIVA — Italy OSINT Platform Types
 // ============================================================
 
 export interface GeoCoord { lat: number; lng: number }
@@ -152,7 +152,7 @@ export interface ShaderSettings {
   bloom: number; sharpening: number;
 }
 
-export type ModuleId = 'markets' | 'weather' | 'seismic' | 'services' | 'livecams' | 'flights';
+export type ModuleId = 'markets' | 'weather' | 'seismic' | 'services' | 'livecams' | 'flights' | 'political';
 
 export interface ModuleConfig {
   id: ModuleId; label: string;

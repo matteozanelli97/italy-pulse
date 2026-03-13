@@ -19,20 +19,17 @@ const LIVE_CAMS: LiveCam[] = [
   { id: 'cam-catania', city: 'Catania', title: 'Etna Vulcano', url: 'https://www.windy.com/webcams/1604905903', embedUrl: WINDY('1604905903'), type: 'webcam', active: true, latitude: 37.5079, longitude: 15.0830, heading: 340, fov: 60 },
   { id: 'cam-amalfi', city: 'Amalfi', title: 'Costa Amalfitana', url: 'https://www.windy.com/webcams/1477654001', embedUrl: WINDY('1477654001'), type: 'webcam', active: true, latitude: 40.6340, longitude: 14.6027, heading: 210, fov: 85 },
   { id: 'cam-torino', city: 'Torino', title: 'Torino Panorama', url: 'https://www.windy.com/webcams/1586878098', embedUrl: WINDY('1586878098'), type: 'webcam', active: true, latitude: 45.0703, longitude: 7.6869, heading: 170, fov: 70 },
-  // === WEBCAM — Europe ===
-  { id: 'cam-paris', city: 'Parigi', title: 'Tour Eiffel', url: 'https://www.windy.com/webcams/1540219997', embedUrl: WINDY('1540219997'), type: 'webcam', active: true, latitude: 48.8584, longitude: 2.2945, heading: 0, fov: 80 },
-  { id: 'cam-barcelona', city: 'Barcellona', title: 'Barcelona Port', url: 'https://www.windy.com/webcams/1460879307', embedUrl: WINDY('1460879307'), type: 'webcam', active: true, latitude: 41.3851, longitude: 2.1734, heading: 150, fov: 75 },
-  { id: 'cam-dubrovnik', city: 'Dubrovnik', title: 'Old Town', url: 'https://www.windy.com/webcams/1240512420', embedUrl: WINDY('1240512420'), type: 'webcam', active: true, latitude: 42.6507, longitude: 18.0944, heading: 230, fov: 70 },
+  // === WEBCAM — Italia extra ===
+  { id: 'cam-genova', city: 'Genova', title: 'Porto di Genova', url: 'https://www.windy.com/webcams/1586879098', embedUrl: WINDY('1586879098'), type: 'webcam', active: true, latitude: 44.4056, longitude: 8.9463, heading: 200, fov: 80 },
+  { id: 'cam-bologna', city: 'Bologna', title: 'Piazza Maggiore', url: 'https://www.windy.com/webcams/1586880098', embedUrl: WINDY('1586880098'), type: 'webcam', active: true, latitude: 44.4949, longitude: 11.3426, heading: 170, fov: 70 },
+  { id: 'cam-palermo', city: 'Palermo', title: 'Palermo Centro', url: 'https://www.windy.com/webcams/1586881098', embedUrl: WINDY('1586881098'), type: 'webcam', active: true, latitude: 38.1157, longitude: 13.3615, heading: 190, fov: 75 },
 
-  // === DIRETTE TV — Italy (verified 24/7 YouTube live channels) ===
+  // === DIRETTE TV — Italia (verified 24/7 YouTube live channels) ===
   { id: 'stream-rainews', city: 'Italia', title: 'Rai News 24', url: 'https://www.youtube.com/c/rainews', embedUrl: YT('cPSKHFs5poI'), type: 'news', active: true },
   { id: 'stream-skytg24', city: 'Italia', title: 'Sky TG24', url: 'https://www.youtube.com/c/SkyTG24', embedUrl: YT('tgbNymZ7vqY'), type: 'news', active: true },
   { id: 'stream-euronews', city: 'Europa', title: 'Euronews IT', url: 'https://www.youtube.com/c/euronewsit', embedUrl: YT('uLoH9MeDpOg'), type: 'news', active: true },
-  // === DIRETTE TV — International ===
-  { id: 'stream-france24', city: 'Francia', title: 'France 24 EN', url: 'https://www.youtube.com/c/FRANCE24English', embedUrl: YT('h3MuIUNCCzI'), type: 'news', active: true },
-  { id: 'stream-dw', city: 'Germania', title: 'DW News', url: 'https://www.youtube.com/c/daborin', embedUrl: YT('GE_SfNVNyqk'), type: 'news', active: true },
-  { id: 'stream-aljazeera', city: 'Qatar', title: 'Al Jazeera EN', url: 'https://www.youtube.com/c/aljazeeraenglish', embedUrl: YT('gCNeDWCI0vo'), type: 'news', active: true },
-  { id: 'stream-bloomberg', city: 'USA', title: 'Bloomberg TV', url: 'https://www.youtube.com/c/BloombergTelevision', embedUrl: YT('dp8PhLsUcFE'), type: 'news', active: true },
+  // === DIRETTE TV — Italian & European ===
+  { id: 'stream-tgcom24', city: 'Italia', title: 'TGCOM24', url: 'https://www.youtube.com/c/tgcom24', embedUrl: YT('diretta-tgcom24'), type: 'news', active: true },
 ];
 
 export async function GET() {

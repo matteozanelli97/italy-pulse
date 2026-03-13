@@ -1,21 +1,22 @@
 'use client';
 
-import { useStore } from '@/lib/store';
 import MarketsModule from './modules/MarketsModule';
 import WeatherAQIModule from './modules/WeatherAQIModule';
 import SeismicModule from './modules/SeismicModule';
 import CyberModule from './modules/CyberModule';
 import LiveCamsModule from './modules/LiveCamsModule';
 import FlightsModule from './modules/FlightsModule';
+import PoliticalModule from './modules/PoliticalModule';
 import type { ModuleId } from '@/types';
 
 const SECTIONS: { id: ModuleId; label: string; Component: React.ComponentType }[] = [
-  { id: 'markets', label: 'MARKETS', Component: MarketsModule },
-  { id: 'weather', label: 'WEATHER', Component: WeatherAQIModule },
-  { id: 'seismic', label: 'SEISMIC (USGS)', Component: SeismicModule },
-  { id: 'services', label: 'SERVICES', Component: CyberModule },
-  { id: 'livecams', label: 'LIVE CAMS', Component: LiveCamsModule },
-  { id: 'flights', label: 'FLIGHTS', Component: FlightsModule },
+  { id: 'political', label: 'SONDAGGI POLITICI', Component: PoliticalModule },
+  { id: 'seismic', label: 'SISMICA (INGV)', Component: SeismicModule },
+  { id: 'weather', label: 'METEO ITALIA', Component: WeatherAQIModule },
+  { id: 'flights', label: 'VOLI SU ITALIA', Component: FlightsModule },
+  { id: 'markets', label: 'MERCATI / FTSE MIB', Component: MarketsModule },
+  { id: 'services', label: 'SERVIZI IT', Component: CyberModule },
+  { id: 'livecams', label: 'TELECAMERE', Component: LiveCamsModule },
 ];
 
 export default function LeftPanel() {

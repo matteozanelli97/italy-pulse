@@ -1,22 +1,44 @@
 'use client';
 
+import { useState } from 'react';
 import { useStore } from '@/lib/store';
+
+const FLIGHT_FILTERS = ['all', 'military', 'commercial', 'cargo'] as const;
+type FlightFilter = typeof FLIGHT_FILTERS[number];
 
 export default function FlightsModule({ search = '' }: { search?: string }) {
   const { data: flights, loading } = useStore((s) => s.flights);
   const flyTo = useStore((s) => s.flyTo);
   const selectMarker = useStore((s) => s.selectMarker);
+  const [filter, setFilter] = useState<FlightFilter>('all');
 
   const filtered = flights.filter((fl) => {
+    if (filter !== 'all' && fl.type !== filter) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return fl.callsign.toLowerCase().includes(s) || fl.origin.toLowerCase().includes(s) || fl.destination.toLowerCase().includes(s) || fl.type.includes(s);
   });
 
+  const milCount = flights.filter((f) => f.type === 'military').length;
+
   if (loading && flights.length === 0) return <Shimmer />;
 
   return (
     <div className="space-y-1.5">
+      {/* Filter bar */}
+      <div className="flex items-center gap-1 mb-1">
+        {FLIGHT_FILTERS.map((f) => (
+          <button key={f} onClick={() => setFilter(f)}
+            className={`text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-colors ${filter === f ? 'text-white' : ''}`}
+            style={{
+              background: filter === f ? (f === 'military' ? 'rgba(239,68,68,0.3)' : 'var(--accent-muted)') : 'transparent',
+              color: filter === f ? (f === 'military' ? '#ef4444' : 'var(--accent)') : 'var(--text-dim)',
+              border: `1px solid ${filter === f ? (f === 'military' ? 'rgba(239,68,68,0.5)' : 'var(--border-medium)') : 'transparent'}`,
+            }}>
+            {f}{f === 'military' && milCount > 0 ? ` (${milCount})` : ''}
+          </button>
+        ))}
+      </div>
       {filtered.slice(0, 14).map((fl) => {
         const isMil = fl.type === 'military';
         const color = isMil ? '#ef4444' : 'var(--blue-400)';

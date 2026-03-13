@@ -484,6 +484,142 @@ const NavalMarkers = memo(function NavalMarkers({ naval, visible }: { naval: Nav
   );
 });
 
+// ── Traffic Particle System — GPU-accelerated road traffic simulation ──
+// Major global highway corridors defined as lat/lng polylines
+const ROAD_CORRIDORS: [number, number][][] = [
+  // US I-95 (Boston → Miami)
+  [[42.36, -71.06], [41.31, -72.93], [40.71, -74.01], [39.95, -75.17], [38.91, -77.04], [35.23, -80.84], [33.75, -84.39], [30.33, -81.66], [25.76, -80.19]],
+  // US I-10 (LA → Jacksonville)
+  [[34.05, -118.24], [33.45, -112.07], [32.22, -110.93], [31.76, -106.49], [29.76, -95.37], [30.45, -87.22], [30.33, -81.66]],
+  // EU: London → Paris → Berlin → Warsaw
+  [[51.51, -0.13], [50.85, 0.58], [49.90, 2.29], [48.86, 2.35], [50.11, 8.68], [52.52, 13.41], [52.23, 21.01]],
+  // EU: Madrid → Barcelona → Marseille → Rome
+  [[40.42, -3.70], [41.39, 2.17], [43.30, 5.37], [43.77, 11.25], [41.90, 12.50]],
+  // Asia: Tokyo → Osaka → Kyoto
+  [[35.68, 139.69], [35.01, 135.77], [34.69, 135.50]],
+  // Asia: Beijing → Shanghai
+  [[39.91, 116.40], [36.07, 120.38], [31.23, 121.47]],
+  // Middle East: Dubai → Abu Dhabi
+  [[25.20, 55.27], [24.45, 54.65]],
+  // South America: Sao Paulo → Rio
+  [[-23.55, -46.63], [-22.91, -43.17]],
+  // Australia: Sydney → Melbourne
+  [[-33.87, 151.21], [-37.81, 144.96]],
+  // India: Delhi → Mumbai
+  [[28.61, 77.21], [26.85, 75.79], [23.03, 72.58], [19.08, 72.88]],
+  // Africa: Cairo → Alexandria
+  [[30.04, 31.24], [31.20, 29.92]],
+  // China: Shenzhen → Guangzhou → Changsha
+  [[22.54, 114.06], [23.13, 113.26], [28.23, 112.94]],
+];
+
+// Pre-compute 3D points for each corridor
+function corridorTo3D(corridor: [number, number][]): THREE.Vector3[] {
+  const points: THREE.Vector3[] = [];
+  for (let i = 0; i < corridor.length - 1; i++) {
+    const [lat1, lng1] = corridor[i];
+    const [lat2, lng2] = corridor[i + 1];
+    // Subdivide each segment for smooth curves
+    const steps = 12;
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const lat = lat1 + (lat2 - lat1) * t;
+      const lng = lng1 + (lng2 - lng1) * t;
+      points.push(latLngToVec3(lat, lng, EARTH_RADIUS * 1.001));
+    }
+  }
+  return points;
+}
+
+const PARTICLE_COUNT = 400;
+const PARTICLE_COLOR = new THREE.Color('#FFD666');
+const _dummy = new THREE.Object3D();
+
+// Road corridor lines (dim lines under the particles)
+const RoadCorridorLines = memo(function RoadCorridorLines({ visible }: { visible: boolean }) {
+  const lines = useMemo(() => {
+    if (!visible) return [];
+    return ROAD_CORRIDORS.map((corridor, i) => {
+      const pts = corridorTo3D(corridor);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return { geo, id: i };
+    });
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const objects = useMemo(() => {
+    return lines.map(({ geo, id }) => {
+      const mat = new THREE.LineBasicMaterial({ color: '#FFD666', transparent: true, opacity: 0.08 });
+      return { obj: new THREE.Line(geo, mat), id };
+    });
+  }, [lines]);
+
+  return (
+    <group>
+      {objects.map(({ obj, id }) => (
+        <primitive key={id} object={obj} />
+      ))}
+    </group>
+  );
+});
+
+const TrafficParticles = memo(function TrafficParticles({ visible }: { visible: boolean }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  // Pre-compute corridor 3D paths
+  const corridorPaths = useMemo(() => ROAD_CORRIDORS.map(corridorTo3D), []);
+
+  // Assign each particle to a corridor + offset
+  const particles = useMemo(() => {
+    const arr: { corridorIdx: number; speed: number; offset: number }[] = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      arr.push({
+        corridorIdx: i % corridorPaths.length,
+        speed: 0.15 + Math.random() * 0.25,
+        offset: Math.random(),
+      });
+    }
+    return arr;
+  }, [corridorPaths.length]);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current || !visible) return;
+    const t = clock.getElapsedTime();
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = particles[i];
+      const path = corridorPaths[p.corridorIdx];
+      const totalPts = path.length;
+      if (totalPts < 2) continue;
+
+      // Progress along path (looping)
+      const progress = ((p.offset + t * p.speed * 0.05) % 1);
+      const exactIdx = progress * (totalPts - 1);
+      const idx0 = Math.floor(exactIdx);
+      const idx1 = Math.min(idx0 + 1, totalPts - 1);
+      const frac = exactIdx - idx0;
+
+      // Interpolate position
+      const pos = path[idx0].clone().lerp(path[idx1], frac);
+      _dummy.position.copy(pos);
+      _dummy.scale.setScalar(0.006);
+      _dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, _dummy.matrix);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  if (!visible) return null;
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, PARTICLE_COUNT]}>
+      <sphereGeometry args={[1, 4, 4]} />
+      <meshBasicMaterial color={PARTICLE_COLOR} transparent opacity={0.8} />
+    </instancedMesh>
+  );
+});
+
 // ── Camera controller with flyTo animation ──
 function CameraController() {
   const { camera } = useThree();
@@ -636,6 +772,8 @@ function Scene() {
       <CyberMarkers cyber={cyber} visible={mapLayers.cyber} />
       <SatelliteMarkers satellites={satellites} visible={mapLayers.satellites} />
       <SeismicMarkers events={seismic} />
+      <RoadCorridorLines visible={mapLayers.traffic} />
+      <TrafficParticles visible={mapLayers.traffic} />
 
       {/* Camera */}
       <CameraController />

@@ -6,32 +6,32 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 ---
 
 ## Phase 1: 3D Engine Lockdown & Core Rebuild ✅
-**Status: IN PROGRESS**
+**Status: COMPLETE**
 
 ### 1A — Cleanse Legacy & Install CesiumJS
 - [x] Remove React Three Fiber / Three.js dependencies
 - [x] Remove legacy TacticalMap.tsx (R3F globe)
-- [x] Remove unused global modules (ArticleModal, mock-data)
-- [x] Install CesiumJS + resium for React integration
-- [x] Configure Next.js for Cesium static assets
+- [x] Remove unused global modules (ArticleModal, NASA textures)
+- [x] Load CesiumJS via CDN (no webpack config needed)
 
 ### 1B — Italy-Locked 3D Engine
 - [x] Build CesiumViewer component with Google Photorealistic 3D Tiles
 - [x] Lock camera bounds to Italian territory (35°N–47.5°N, 6°E–19°E)
 - [x] Dim/stylize rest of world outside Italy
 - [x] Deep zoom with 3D buildings over Italian regions
+- [x] Coordinates HUD with live camera position
 
 ### 1C — Post-Processing Shaders
 - [x] Standard view (clean)
-- [x] CRT scanline shader
-- [x] Green Night Vision shader
-- [x] Thermal FLIR shader
-- [x] HUD controls for bloom/pixelation
+- [x] CRT scanline shader with vignette
+- [x] Green Night Vision shader with film grain
+- [x] Thermal FLIR shader with gradient
+- [x] Shader mode selector (Q/W/E/R shortcuts)
 
-### 1D — Italian POI Camera Shortcuts
+### 1D — Italian POI Camera Shortcuts (1-8)
 - [x] Colosseo (Roma)
 - [x] Duomo di Milano
-- [x] Palazzo Chigi (Parlamento)
+- [x] Palazzo Chigi (Governo)
 - [x] Piazza San Marco (Venezia)
 - [x] Vesuvio (Napoli)
 - [x] Ponte Vecchio (Firenze)
@@ -40,51 +40,59 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 
 ---
 
-## Phase 2: Italian Data Aggregation (Omnivore Engine)
-**Status: PENDING**
+## Phase 2: Italian Data Modules ✅
+**Status: COMPLETE**
 
-### 2A — Institutional Open Data
-- [ ] INGV seismic data (real API: webservices.ingv.it)
-- [ ] Protezione Civile alerts
-- [ ] Dati.gov.it CKAN/DCAT integration
-- [ ] Project data onto 3D map as markers/heatmaps
+### 2A — Political Sentiment Module
+- [x] Track 8 parties: FdI, PD, M5S, Lega, FI, AVS, IV, Azione
+- [x] Dynamic approval percentages with trends
+- [x] Bar chart + list views with leader info
+- [x] Color-coded by party
 
-### 2B — RapidAPI Data Sources
-- [ ] Idealista (Real Estate trends)
-- [ ] Live fuel prices across Italy
-- [ ] Events & Crowds (Zaza81 API)
-- [ ] Serie A live scores & stats
+### 2B — INGV Seismic Integration
+- [x] Real INGV FDSN API (webservices.ingv.it)
+- [x] USGS fallback filtered to Italy bounding box
+- [x] Italian labels in SeismicModule
 
-### 2C — Aviation & Space Overlays
-- [ ] OpenSky flights filtered to Italian airspace
-- [ ] NORAD satellite passes over Italy
-- [ ] ADS-B military flight tracking
+### 2C — Italian Data Sources
+- [x] OpenSky flights filtered to Italian airspace
+- [x] Weather for 20 Italian cities (Open-Meteo)
+- [x] Air quality for Italian cities
+- [x] Italian markets (FTSE MIB, ENI, ISP, ENEL, Ferrari, BTP-Bund, PUN, TTF)
+- [x] Italian webcams only (Roma, Venezia, Napoli, Milano, Firenze, etc.)
+- [x] Italian news feeds (ANSA, Corriere, Repubblica, etc.)
+
+### 2D — UI Localization
+- [x] All module labels in Italian
+- [x] TopBar: Italian timezone (CET), Italian date format
+- [x] WMO weather codes translated to Italian
+- [x] Italian news source favicons
 
 ---
 
-## Phase 3: Tactical Overlays & CCTV
-**Status: PENDING**
+## Phase 3: Advanced Data Integration
+**Status: PENDING — Next session**
 
-### 3A — Street Traffic Simulation
-- [ ] Extract Italian road network from OSM
-- [ ] WebGL particle system for vehicle simulation
-- [ ] Load arterial roads first (performance)
+### 3A — RapidAPI Data Sources
+- [ ] Idealista (Real Estate trends via RapidAPI)
+- [ ] Live fuel prices across Italy (RapidAPI)
+- [ ] Events & Crowds (Zaza81 API via RapidAPI)
+- [ ] Serie A live scores & stats (RapidAPI)
 
-### 3B — Live CCTV Projection
-- [ ] Italian public webcam framework
-- [ ] Camera frustum projection onto 3D geometry
-- [ ] Stream overlay on buildings/streets
+### 3B — Institutional Open Data
+- [ ] Protezione Civile alerts
+- [ ] Dati.gov.it CKAN/DCAT integration
+- [ ] Project data onto CesiumJS map as entities
 
 ---
 
 ## Phase 4: Socio-Political & Crisis Modules
 **Status: PENDING**
 
-### 4A — Political Sentiment Module
-- [ ] Track FdI, PD, M5S, Lega, FI
-- [ ] Dynamic approval percentages
+### 4A — Political Sentiment Enhancement
+- [ ] Real polling data from aggregators
 - [ ] Social media sentiment analysis
-- [ ] Historical polling charts
+- [ ] Historical polling trend charts
 
 ### 4B — Referendum/Events Tracker
 - [ ] Live countdowns for upcoming votes
@@ -95,8 +103,9 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 ---
 
 ## Architecture Notes
-- **3D Engine**: CesiumJS with Google Photorealistic 3D Tiles (Cesium Ion token)
+- **3D Engine**: CesiumJS via CDN + Google Photorealistic 3D Tiles (Cesium Ion token)
 - **Data**: RapidAPI + Italian public APIs (INGV, Protezione Civile, dati.gov.it)
-- **State**: Zustand store (preserved from original)
+- **State**: Zustand store
 - **Framework**: Next.js 16 with Turbopack
-- **Styling**: Tailwind CSS + Palantir Gotham theme (preserved)
+- **Styling**: Tailwind CSS 4 + Palantir Gotham theme
+- **Shaders**: CSS filter-based (CRT, NVG, FLIR) with overlay compositing

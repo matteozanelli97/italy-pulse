@@ -67,13 +67,12 @@ export const SEVERITY_COLORS = {
   low: '#2D72D2', medium: '#EC9A3C', high: '#E76A6E', critical: '#CD4246',
 } as const;
 
-// News category colors — Italian categories
+// News category colors — matching classifyCategory() output
 export const CATEGORY_COLORS: Record<string, string> = {
-  Politica: '#8b5cf6',
-  Economia: '#EC9A3C',
-  Cronaca: '#2D72D2',
-  Sicurezza: '#ec4899',
-  Esteri: '#10b981',
+  Politics: '#8b5cf6',
+  Economy: '#EC9A3C',
+  World: '#2D72D2',
+  Cronaca: '#ec4899',
 };
 
 // Left panel modules — Italy-focused

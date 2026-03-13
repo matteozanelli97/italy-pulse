@@ -29,8 +29,8 @@ export default function TopBar({ onToggleData, onToggleIntel, showData, showInte
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString('en-US', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-      setDate(now.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }));
+      setTime(now.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+      setDate(now.toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }));
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -107,11 +107,11 @@ export default function TopBar({ onToggleData, onToggleIntel, showData, showInte
       <div className="flex items-center gap-3 font-mono">
         <span className={`${SZ} tracking-wide`} style={{ color: '#fff' }}>{date}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
-        <span className={`${SZ} font-bold tabular-nums tracking-wider`} style={{ color: '#fff' }}>{time} UTC</span>
+        <span className={`${SZ} font-bold tabular-nums tracking-wider`} style={{ color: '#fff' }}>{time} CET</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
-        <span className={SZ} style={{ color: '#fff' }}>Sources {activeSources}/{sources.length}</span>
+        <span className={SZ} style={{ color: '#fff' }}>Fonti {activeSources}/{sources.length}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
-        <span className={SZ} style={{ color: '#fff' }}>Data {totalDataPoints}</span>
+        <span className={SZ} style={{ color: '#fff' }}>Dati {totalDataPoints}</span>
         <span className="text-[8px]" style={{ color: 'var(--border-medium)' }}>|</span>
         <span className={SZ} style={{ color: ping > 500 ? '#f59e0b' : '#fff' }}>Ping {ping}ms</span>
       </div>

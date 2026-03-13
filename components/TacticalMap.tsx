@@ -79,11 +79,11 @@ const EarthGlobe = memo(function EarthGlobe() {
   const meshRef = useRef<THREE.Mesh>(null);
   const dayTexture = useLoader(
     THREE.TextureLoader,
-    '/api/texture?id=day'
+    '/textures/earth-day.jpg'
   );
   const nightTexture = useLoader(
     THREE.TextureLoader,
-    '/api/texture?id=night'
+    '/textures/earth-night.jpg'
   );
 
   // Slow rotation

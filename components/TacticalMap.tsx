@@ -3,7 +3,11 @@
 import { useRef, useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import {
+  EffectComposer, Bloom, Vignette, Noise, ChromaticAberration,
+  HueSaturation, BrightnessContrast, Pixelation, Scanline, Grid,
+} from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { useStore } from '@/lib/store';
 import { sounds } from '@/lib/sounds';
@@ -536,6 +540,73 @@ function CameraController() {
   );
 }
 
+// ── Post-processing: Standard (no sensor mode) ──
+function PostFXNone({ bloom }: { bloom: number }) {
+  return (
+    <EffectComposer>
+      <Bloom luminanceThreshold={0.45} luminanceSmoothing={0.9} intensity={0.4 + bloom * 1.6} />
+      <Vignette offset={0.3} darkness={0.6} />
+    </EffectComposer>
+  );
+}
+
+// ── Post-processing: NVG (Night Vision) ──
+function PostFXNvg({ sensitivity, bloom, sharpening, pixelation }: { sensitivity: number; bloom: number; sharpening: number; pixelation: number }) {
+  return (
+    <EffectComposer>
+      <Bloom luminanceThreshold={0.3} luminanceSmoothing={0.9} intensity={0.8 + bloom * 2} />
+      <HueSaturation hue={1.4} saturation={0.6 + sensitivity * 0.4} blendFunction={BlendFunction.NORMAL} />
+      <BrightnessContrast brightness={0.08 + sensitivity * 0.12} contrast={0.15 + sharpening * 0.3} />
+      <Noise opacity={0.08 + sensitivity * 0.12} blendFunction={BlendFunction.SOFT_LIGHT} />
+      {pixelation > 0.2 ? <Pixelation granularity={Math.round(pixelation * 4)} /> : <></>}
+      <Vignette offset={0.2} darkness={0.85} />
+    </EffectComposer>
+  );
+}
+
+// ── Post-processing: FLIR (Thermal) ──
+function PostFXFlir({ sensitivity, bloom, sharpening, pixelation }: { sensitivity: number; bloom: number; sharpening: number; pixelation: number }) {
+  return (
+    <EffectComposer>
+      <Bloom luminanceThreshold={0.4} luminanceSmoothing={0.9} intensity={0.5 + bloom * 1.5} />
+      <HueSaturation hue={-2.6 + sensitivity * 0.5} saturation={0.5 + sensitivity * 0.5} blendFunction={BlendFunction.NORMAL} />
+      <BrightnessContrast brightness={-0.05} contrast={0.3 + sharpening * 0.4} />
+      {pixelation > 0.2 ? <Pixelation granularity={Math.round(pixelation * 4)} /> : <></>}
+      <Vignette offset={0.2} darkness={0.85} />
+    </EffectComposer>
+  );
+}
+
+// ── Post-processing: CRT (Retro Monitor) ──
+function PostFXCrt({ sensitivity, bloom, sharpening, pixelation }: { sensitivity: number; bloom: number; sharpening: number; pixelation: number }) {
+  const caOffset = useMemo(
+    () => new THREE.Vector2(0.003 * (1 + sensitivity), 0.002 * (1 + sensitivity)),
+    [sensitivity]
+  );
+  return (
+    <EffectComposer>
+      <Bloom luminanceThreshold={0.45} luminanceSmoothing={0.9} intensity={0.4 + bloom * 1.6} />
+      <Scanline density={1.8 + sensitivity * 2} opacity={0.12 + sensitivity * 0.15} />
+      <ChromaticAberration offset={caOffset} radialModulation={false} />
+      <BrightnessContrast brightness={-0.04} contrast={0.12 + sharpening * 0.25} />
+      <Noise opacity={0.04 + sensitivity * 0.06} blendFunction={BlendFunction.OVERLAY} />
+      {pixelation > 0.2 ? <Pixelation granularity={Math.round(pixelation * 4)} /> : <></>}
+      <Vignette offset={0.15} darkness={0.9} />
+    </EffectComposer>
+  );
+}
+
+// ── Post-processing router ──
+function PostFX() {
+  const { mode, sensitivity, pixelation, bloom, sharpening } = useStore((s) => s.shaderSettings);
+  const props = { sensitivity, pixelation, bloom, sharpening };
+
+  if (mode === 'nvg') return <PostFXNvg {...props} />;
+  if (mode === 'flir') return <PostFXFlir {...props} />;
+  if (mode === 'crt') return <PostFXCrt {...props} />;
+  return <PostFXNone bloom={bloom} />;
+}
+
 // ── Main 3D scene ──
 function Scene() {
   const flights = useStore((s) => s.flights.data);
@@ -569,11 +640,8 @@ function Scene() {
       {/* Camera */}
       <CameraController />
 
-      {/* Post-processing */}
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.5} luminanceSmoothing={0.9} intensity={0.5} />
-        <Vignette offset={0.3} darkness={0.6} />
-      </EffectComposer>
+      {/* Real WebGL post-processing */}
+      <PostFX />
     </>
   );
 }
@@ -656,17 +724,11 @@ export default function TacticalMap() {
     };
   }, [flyTo]);
 
-  // CSS filter based on sensor mode
+  // NVG green tint overlay (light CSS complement to WebGL shaders)
   const canvasFilter = useMemo(() => {
-    const filters: string[] = [];
-    if (shaderSettings.mode === 'nvg') filters.push('hue-rotate(80deg) saturate(3) brightness(1.2)');
-    if (shaderSettings.mode === 'flir') filters.push('hue-rotate(190deg) saturate(2) contrast(1.3)');
-    if (shaderSettings.mode === 'crt') filters.push('contrast(1.2) brightness(0.9)');
-    if (shaderSettings.pixelation > 0) filters.push(`blur(${shaderSettings.pixelation}px)`);
-    if (shaderSettings.bloom > 0) filters.push(`brightness(${1 + shaderSettings.bloom * 0.5})`);
-    if (shaderSettings.sharpening > 0) filters.push(`contrast(${1 + shaderSettings.sharpening * 0.3})`);
-    return filters.length > 0 ? filters.join(' ') : undefined;
-  }, [shaderSettings]);
+    if (shaderSettings.mode === 'nvg') return 'hue-rotate(80deg) saturate(2)';
+    return undefined;
+  }, [shaderSettings.mode]);
 
   return (
     <div className="relative flex-1 h-full" style={{ background: '#050810' }}>
@@ -688,15 +750,6 @@ export default function TacticalMap() {
       >
         <Scene />
       </Canvas>
-
-      {/* Scanline overlay for CRT mode */}
-      {shaderSettings.mode === 'crt' && (
-        <div className="pointer-events-none absolute inset-0 z-[1]"
-          style={{
-            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.15) 1px, rgba(0,0,0,0.15) 2px)',
-            backgroundSize: '100% 2px',
-          }} />
-      )}
 
       {/* Edge vignette */}
       <div className="pointer-events-none absolute inset-0 z-[1]">

@@ -1,7 +1,7 @@
 # SALA OPERATIVA — Italy OSINT Platform Execution Plan
 
 ## Vision
-Transform this project from a global OSINT dashboard into the most advanced, immersive OSINT platform exclusively dedicated to **Italy** — combining Palantir-like aesthetics with massive real-time Italian data aggregation.
+Transform this project into the most advanced, immersive OSINT platform exclusively dedicated to **Italy** — combining Palantir-like aesthetics with massive real-time Italian data aggregation.
 
 ---
 
@@ -38,6 +38,12 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 - [x] Valle dei Templi (Sicilia)
 - [x] Trulli di Alberobello (Puglia)
 
+### 1E — Critical Bug Fixes ✅ (NEW)
+- [x] Fix CesiumJS infinite loading — wrapped initCesium in try/catch with terrain fallback
+- [x] Add error state display when 3D engine fails to initialize
+- [x] Guard against React StrictMode double-mount
+- [x] Set CESIUM_BASE_URL before any Cesium operations
+
 ---
 
 ## Phase 2: Italian Data Modules ✅
@@ -48,6 +54,7 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 - [x] Dynamic approval percentages with trends
 - [x] Bar chart + list views with leader info
 - [x] Color-coded by party
+- [x] Stabilized polling data (daily-seeded, no random jitter on every render)
 
 ### 2B — INGV Seismic Integration
 - [x] Real INGV FDSN API (webservices.ingv.it)
@@ -58,9 +65,9 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 - [x] OpenSky flights filtered to Italian airspace
 - [x] Weather for 20 Italian cities (Open-Meteo)
 - [x] Air quality for Italian cities
-- [x] Italian markets (FTSE MIB, ENI, ISP, ENEL, Ferrari, BTP-Bund, PUN, TTF)
+- [x] Italian markets (FTSE MIB, ENI, ISP, ENEL, Ferrari, BTP-Bund, PUN, TTF + BTC/ETH via CoinGecko)
 - [x] Italian webcams only (Roma, Venezia, Napoli, Milano, Firenze, etc.)
-- [x] Italian news feeds (ANSA, Corriere, Repubblica, etc.)
+- [x] Italian news feeds (ANSA, Corriere, Repubblica, etc.) with auto-translation
 
 ### 2D — UI Localization
 - [x] All module labels in Italian
@@ -92,35 +99,80 @@ Transform this project from a global OSINT dashboard into the most advanced, imm
 - [x] Color-coded event cards with descriptions
 - [x] Real events: Autonomia Differenziata, Comunali 2026, Scioperi, 25 Aprile
 
+### 3D — Protezione Civile Alerts
+- [x] DPC open data integration with GitHub API
+- [x] Alert types: idraulico, idrogeologico, temporali, vento, neve, incendi, valanghe
+- [x] Severity-based color coding (verde/gialla/arancione/rossa)
+- [x] Seasonal fallback generator
+
+### 3E — UI-to-3D Event Bridge ✅ (NEW)
+- [x] CesiumMap reads `flyToTarget` from Zustand store
+- [x] Clicking seismic events, flights, weather cities triggers cinematic camera flyTo
+- [x] Zoom level to altitude conversion for smooth transitions
+- [x] Support for pitch/bearing parameters
+
 ---
 
 ## Phase 4: Future Enhancements
 **Status: PENDING — Future sessions**
 
-### 4A — Deeper RapidAPI Integration
+### 4A — Draggable Floating Windows (HUD)
+- [ ] Replace static sidebar with draggable, resizable floating windows (react-rnd / framer-motion)
+- [ ] Glassmorphism with glowing neon borders
+- [ ] CRT scanline overlay on windows
+- [ ] Module toggle/minimize/close controls
+
+### 4B — Deeper RapidAPI Integration
 - [ ] Idealista (Real Estate market trends)
 - [ ] Events & Crowds (Zaza81 API)
-- [ ] Real polling data from aggregators
+- [ ] Real polling data from aggregators (replace synthetic with API)
 - [ ] Social media sentiment analysis
 
-### 4B — Institutional Open Data
-- [ ] Protezione Civile alerts
+### 4C — Institutional Open Data
 - [ ] Dati.gov.it CKAN/DCAT integration
 - [ ] Project institutional data onto CesiumJS map as entities
-
-### 4C — Map Data Overlays
-- [ ] Seismic events as 3D markers on CesiumJS
-- [ ] Flight tracks overlaid on 3D map
 - [ ] Regional voting trends as 3D heatmaps
+
+### 4D — Map Data Overlays (Advanced)
 - [ ] Strike impact mapping with choropleth
+- [ ] Street traffic simulation (WebGL particle system)
+- [ ] NORAD satellite tracking over Italy
+- [ ] Real-time naval/AIS tracking (replace mock data)
+
+### 4E — Ontology Layer (Palantir-style)
+- [ ] Entity graph connecting people, organizations, events, locations
+- [ ] Relationship mapping between political entities, companies, events
+- [ ] Timeline view for entity history
+- [ ] Search and filter across all entities
+
+---
+
+## Data Source Status
+
+| Module | Source | Status |
+|--------|--------|--------|
+| Seismic | INGV FDSN + USGS fallback | ✅ Real API |
+| Flights | OpenSky Network | ✅ Real API |
+| Weather | Open-Meteo | ✅ Real API |
+| News | 25+ Italian RSS feeds | ✅ Real API |
+| Markets | CoinGecko + synthetic Italian stocks | ⚠️ Hybrid |
+| Satellites | CelesTrak TLE | ✅ Real API |
+| Serie A | API-Football via RapidAPI | ⚠️ With fallback |
+| Fuel | prezzo-benzina via RapidAPI | ⚠️ With fallback |
+| Prot. Civile | DPC GitHub | ⚠️ With fallback |
+| Political | Seeded synthetic | ❌ Needs real API |
+| Events | Hardcoded events | ❌ Needs real API |
+| Cyber | Mock generator | ❌ Simulated |
+| Naval | Mock generator | ❌ Simulated |
 
 ---
 
 ## Architecture Notes
 - **3D Engine**: CesiumJS via CDN + Google Photorealistic 3D Tiles (Cesium Ion token)
 - **Data**: RapidAPI (API-Football, fuel prices) + Italian public APIs (INGV, Open-Meteo, OpenSky)
-- **State**: Zustand store with typed slices
+- **State**: Zustand store with typed slices + polling engine
 - **Framework**: Next.js 16 with Turbopack
 - **Styling**: Tailwind CSS 4 + Palantir Gotham theme
 - **Shaders**: CSS filter-based (CRT, NVG, FLIR) with overlay compositing
-- **Modules**: 10 data panels (Political, Events, Seismic, Weather, Flights, Serie A, Fuel, Markets, Services, Webcams)
+- **Modules**: 11 data panels (Political, Events, Protezione Civile, Seismic, Weather, Flights, Serie A, Fuel, Markets, Services, Webcams)
+- **UI-to-3D Bridge**: Store-based flyToTarget → CesiumJS camera.flyTo()

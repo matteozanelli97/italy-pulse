@@ -43,9 +43,12 @@ export default function CesiumMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const [currentPoi, setCurrentPoi] = useState<string | null>(null);
   const shaderMode = useStore((s) => s.shaderSettings.mode);
   const setShaderMode = useStore((s) => s.setShaderMode);
+  const flyToTarget = useStore((s) => s.flyToTarget);
+  const clearFlyTo = useStore((s) => s.clearFlyTo);
 
   // Initialize Cesium viewer
   useEffect(() => {
@@ -60,87 +63,104 @@ export default function CesiumMap() {
     };
 
     const initCesium = async () => {
-      const token = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
-      if (token) {
-        Cesium.Ion.defaultAccessToken = token;
-      }
-
-      // Set base URL for Cesium assets
-      window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/';
-
-      const viewer = new Cesium.Viewer(containerRef.current, {
-        terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(1),
-        baseLayerPicker: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        selectionIndicator: false,
-        navigationHelpButton: false,
-        animation: false,
-        timeline: false,
-        fullscreenButton: false,
-        vrButton: false,
-        infoBox: false,
-        creditContainer: document.createElement('div'), // hide credits overlay
-        shadows: false,
-        skyAtmosphere: new Cesium.SkyAtmosphere(),
-        contextOptions: {
-          webgl: {
-            alpha: false,
-            antialias: true,
-            preserveDrawingBuffer: true,
-          },
-        },
-      });
-
-      // Enable depth testing against terrain
-      viewer.scene.globe.depthTestAgainstTerrain = true;
-
-      // Dark globe styling — dim everything outside Italy
-      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a0e17');
-      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050810');
-
-      // Try adding Google Photorealistic 3D Tiles
       try {
-        const tileset = await Cesium.createGooglePhotorealistic3DTileset();
-        viewer.scene.primitives.add(tileset);
-      } catch (e) {
-        console.warn('Google 3D Tiles not available, using default imagery:', e);
-      }
+        // MUST set base URL before any Cesium operations
+        window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/';
 
-      // Add Italy border highlight
-      addItalyHighlight(viewer);
-
-      // Fly to Italy on load
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(ITALY_CENTER.lng, ITALY_CENTER.lat, 2_000_000),
-        orientation: {
-          heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(-60),
-          roll: 0,
-        },
-        duration: 2,
-      });
-
-      // Camera clamping — keep within Italy bounds (loosely)
-      viewer.camera.changed.addEventListener(() => {
-        const carto = viewer.camera.positionCartographic;
-        const lng = Cesium.Math.toDegrees(carto.longitude);
-        const lat = Cesium.Math.toDegrees(carto.latitude);
-
-        // Soft clamp: if camera drifts too far, gently pull back
-        const margin = 8; // degrees of margin outside Italy
-        if (lng < ITALY_BOUNDS.west - margin || lng > ITALY_BOUNDS.east + margin ||
-            lat < ITALY_BOUNDS.south - margin || lat > ITALY_BOUNDS.north + margin) {
-          viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(ITALY_CENTER.lng, ITALY_CENTER.lat, Math.max(carto.height, 500_000)),
-            duration: 1,
-          });
+        const token = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+        if (token) {
+          Cesium.Ion.defaultAccessToken = token;
         }
-      });
 
-      viewerRef.current = viewer;
-      setReady(true);
+        // Terrain provider — optional, fall back gracefully
+        let terrainProvider: any;
+        try {
+          terrainProvider = await Cesium.CesiumTerrainProvider.fromIonAssetId(1);
+        } catch (e) {
+          console.warn('Cesium Ion terrain unavailable, using ellipsoid:', e);
+          terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        }
+
+        // Guard against unmounted container (React StrictMode double-mount)
+        if (!containerRef.current) return;
+
+        const viewer = new Cesium.Viewer(containerRef.current, {
+          terrainProvider,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          selectionIndicator: false,
+          navigationHelpButton: false,
+          animation: false,
+          timeline: false,
+          fullscreenButton: false,
+          vrButton: false,
+          infoBox: false,
+          creditContainer: document.createElement('div'),
+          shadows: false,
+          skyAtmosphere: new Cesium.SkyAtmosphere(),
+          contextOptions: {
+            webgl: {
+              alpha: false,
+              antialias: true,
+              preserveDrawingBuffer: true,
+            },
+          },
+        });
+
+        // Enable depth testing against terrain
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        // Dark globe styling — dim everything outside Italy
+        viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a0e17');
+        viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050810');
+
+        // Try adding Google Photorealistic 3D Tiles (non-blocking)
+        try {
+          const tileset = await Cesium.createGooglePhotorealistic3DTileset();
+          viewer.scene.primitives.add(tileset);
+        } catch (e) {
+          console.warn('Google 3D Tiles not available, using default imagery:', e);
+        }
+
+        // Add Italy border highlight
+        addItalyHighlight(viewer);
+
+        // Fly to Italy on load
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(ITALY_CENTER.lng, ITALY_CENTER.lat, 2_000_000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-60),
+            roll: 0,
+          },
+          duration: 2,
+        });
+
+        // Camera clamping — keep within Italy bounds (loosely)
+        viewer.camera.changed.addEventListener(() => {
+          const carto = viewer.camera.positionCartographic;
+          const lng = Cesium.Math.toDegrees(carto.longitude);
+          const lat = Cesium.Math.toDegrees(carto.latitude);
+
+          const margin = 8;
+          if (lng < ITALY_BOUNDS.west - margin || lng > ITALY_BOUNDS.east + margin ||
+              lat < ITALY_BOUNDS.south - margin || lat > ITALY_BOUNDS.north + margin) {
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(ITALY_CENTER.lng, ITALY_CENTER.lat, Math.max(carto.height, 500_000)),
+              duration: 1,
+            });
+          }
+        });
+
+        viewerRef.current = viewer;
+        setReady(true);
+      } catch (err) {
+        console.error('CesiumJS initialization failed:', err);
+        setInitError(String(err));
+        setReady(true); // unblock UI even on failure
+      }
     };
 
     waitForCesium();
@@ -220,6 +240,28 @@ export default function CesiumMap() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setShaderMode]);
 
+  // UI-to-3D Event Bridge: respond to flyToTarget from store
+  useEffect(() => {
+    if (!flyToTarget || !viewerRef.current || typeof Cesium === 'undefined') return;
+
+    const { lat, lng, zoom, pitch, bearing } = flyToTarget;
+    // Convert zoom level to approximate altitude (higher zoom = lower altitude)
+    const altitude = zoom ? Math.max(500, 40_000_000 / Math.pow(2, zoom)) : 50_000;
+
+    viewerRef.current.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lng, lat, altitude),
+      orientation: {
+        heading: Cesium.Math.toRadians(bearing ?? 0),
+        pitch: Cesium.Math.toRadians(pitch ?? -35),
+        roll: 0,
+      },
+      duration: 2,
+    });
+
+    // Clear after initiating flight
+    clearFlyTo();
+  }, [flyToTarget, clearFlyTo]);
+
   // Active POI info
   const activePoi = ITALIAN_POIS.find((p) => p.id === currentPoi);
 
@@ -253,6 +295,16 @@ export default function CesiumMap() {
             <p className="font-mono text-[9px]" style={{ color: 'var(--text-dim)' }}>
               Caricamento CesiumJS + Google 3D Tiles
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Init error banner */}
+      {initError && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+          <div className="glass-panel rounded-lg px-4 py-2 text-center border border-red-500/30">
+            <p className="font-mono text-[10px] text-red-400">3D ENGINE ERROR</p>
+            <p className="font-mono text-[8px] text-red-400/60 max-w-xs truncate">{initError}</p>
           </div>
         </div>
       )}

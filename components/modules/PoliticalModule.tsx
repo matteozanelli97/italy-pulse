@@ -14,19 +14,35 @@ interface PartyPoll {
   sentiment: 'positive' | 'neutral' | 'negative';
 }
 
-// Simulated polling data — in Phase 2B this will connect to real APIs
+// Seeded random for stable polling data (changes daily, not every render)
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// Polling data with daily-seeded variance (stable within same day)
 function generatePollingData(): PartyPoll[] {
-  return ITALIAN_PARTIES.map((party) => {
-    // Base polling percentages (roughly accurate as of 2025)
-    const basePolls: Record<string, number> = {
-      fdi: 28.5, pd: 23.2, m5s: 11.8, lega: 8.5, fi: 9.2,
-      avs: 6.8, iv: 3.2, azione: 3.5,
-    };
-    const base = basePolls[party.id] || 5;
-    const variance = (Math.random() - 0.5) * 2;
-    const approval = Math.max(1, Math.min(40, base + variance));
-    const trend = (Math.random() - 0.5) * 1.5;
-    const sentiment = trend > 0.3 ? 'positive' : trend < -0.3 ? 'negative' : 'neutral';
+  const daySeed = Math.floor(Date.now() / 86_400_000); // changes once per day
+
+  // Base polling percentages (roughly accurate as of early 2026)
+  const basePolls: Record<string, { base: number; trend: number }> = {
+    fdi: { base: 27.8, trend: -0.3 },
+    pd: { base: 23.5, trend: 0.4 },
+    m5s: { base: 11.2, trend: -0.2 },
+    fi: { base: 9.5, trend: 0.1 },
+    lega: { base: 8.3, trend: -0.4 },
+    avs: { base: 7.1, trend: 0.5 },
+    azione: { base: 3.6, trend: 0.0 },
+    iv: { base: 3.0, trend: -0.1 },
+  };
+
+  return ITALIAN_PARTIES.map((party, i) => {
+    const config = basePolls[party.id] || { base: 3, trend: 0 };
+    const seed = daySeed * 31 + i * 7;
+    const variance = (seededRandom(seed) - 0.5) * 0.8; // ±0.4 max daily variance
+    const approval = Math.max(1, Math.min(40, config.base + variance));
+    const trend = config.trend + (seededRandom(seed + 1) - 0.5) * 0.3;
+    const sentiment = trend > 0.2 ? 'positive' : trend < -0.2 ? 'negative' : 'neutral';
 
     return {
       id: party.id,
